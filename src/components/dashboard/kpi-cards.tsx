@@ -188,14 +188,14 @@ export function KPICards({ kpis, isLoading }: KPICardsProps) {
             <div className="w-px h-10 bg-[#cc785c]/20" />
             <div className="text-center">
               <p className="text-[10px] font-mono text-[#8e8b82] uppercase tracking-wider mb-1">Daily Run Rate</p>
-              <p className="font-serif text-xl text-[#141413]">
+              <p className="font-serif text-xl text-[#141413]" suppressHydrationWarning>
                 {formatCurrency(kpis.monthRevenueSoFar / Math.max(1, new Date().getDate()))}
               </p>
             </div>
             <div className="w-px h-10 bg-[#cc785c]/20" />
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-[#8e8b82]" />
-              <span className="text-xs text-[#8e8b82] font-mono">
+              <span className="text-xs text-[#8e8b82] font-mono" suppressHydrationWarning>
                 {new Date().toLocaleDateString("en-US", { month: "long" })} pacing
               </span>
             </div>

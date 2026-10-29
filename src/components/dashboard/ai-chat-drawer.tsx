@@ -153,6 +153,7 @@ export function AIChatDrawer({ isOpen, onClose }: AIChatDrawerProps) {
               >
                 <p className="text-sm leading-relaxed">{msg.content}</p>
                 <p
+                  suppressHydrationWarning
                   className={`text-[10px] mt-1.5 font-mono ${
                     msg.role === "user" ? "text-white/60" : "text-[#6c6a64]"
                   }`}

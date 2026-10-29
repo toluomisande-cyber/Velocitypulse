@@ -29,9 +29,18 @@ export function AIForecastPanel({ className = "" }: { className?: string }) {
 
   useEffect(() => {
     fetch("/api/ai/forecast")
-      .then((r) => r.json())
-      .then(setData)
-      .catch(() => {})
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP error ${r.status}`);
+        return r.json();
+      })
+      .then((res) => {
+        if (res && Array.isArray(res.forecasts)) {
+          setData(res);
+        }
+      })
+      .catch((err) => {
+        console.warn("Forecast fetch warning:", err);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -149,7 +158,7 @@ export function AIForecastPanel({ className = "" }: { className?: string }) {
 
             {/* Forecast rows */}
             <div className="space-y-2">
-              {data?.forecasts.map((f, i) => (
+              {data?.forecasts?.map((f, i) => (
                 <div
                   key={i}
                   className="flex items-center justify-between py-2.5 px-3 rounded-lg bg-[#f5f0e8] border border-[#e6dfd8]"
@@ -200,4 +209,3 @@ export function AIForecastPanel({ className = "" }: { className?: string }) {
     </div>
   );
 }
-
