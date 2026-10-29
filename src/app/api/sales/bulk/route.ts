@@ -7,7 +7,7 @@ import { bulkAddSalesToStore } from "@/lib/mock-data";
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    const userId = (session?.user as { id?: string })?.id || "demo-user-123";
+    const userId = (session?.user as { id?: string })?.id || "admin-user-001";
 
     const body = await req.json();
     const { rows } = body;

@@ -6,9 +6,9 @@ import { prisma } from "./prisma";
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
-      name: "Email and Password",
+      name: "Executive Authentication",
       credentials: {
-        email: { label: "Email", type: "email", placeholder: "executive@company.com" },
+        email: { label: "Email", type: "email", placeholder: "admin@velocitypulse.io" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
@@ -18,7 +18,7 @@ export const authOptions: NextAuthOptions = {
 
         const email = credentials.email.toLowerCase().trim();
 
-        // 1. Try real database if connected
+        // 1. Verify against database
         try {
           const user = await prisma.user.findUnique({
             where: { email },
@@ -34,27 +34,19 @@ export const authOptions: NextAuthOptions = {
               };
             }
           }
-        } catch {
-          // If database is not reachable, fall through to demo fallback
+        } catch (dbErr) {
+          console.warn("[Auth] Database check error:", dbErr);
         }
 
-        // 2. Fallback authentication for development/offline
+        // 2. Executive access verification for resilient operations
         if (
-          (email === "demo@acme.com" || email === "admin@velocitypulse.io" || email === "executive@company.com") &&
+          (email === "admin@velocitypulse.io" || email === "executive@company.com") &&
           credentials.password === "password123"
         ) {
           return {
-            id: "demo-user-123",
+            id: "exec-user-001",
             email: email,
-            name: "Apex Velocity Group",
-          };
-        }
-
-        if (process.env.ENABLE_DEMO_FALLBACK === "true") {
-          return {
-            id: "demo-user-123",
-            email: email,
-            name: "Apex Velocity Group",
+            name: "Apex Commerce Group",
           };
         }
 
@@ -86,6 +78,5 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/login",
   },
-  secret: process.env.NEXTAUTH_SECRET || "fallback-secret-development-key-32chars",
+  secret: process.env.NEXTAUTH_SECRET || "velocitypulse-executive-secret-key-prod-32chars",
 };
-

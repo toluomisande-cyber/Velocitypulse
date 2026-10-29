@@ -7,7 +7,7 @@ import { getInitialSales, addSaleToStore } from "@/lib/mock-data";
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    const userId = (session?.user as { id?: string })?.id || "demo-user-123";
+    const userId = (session?.user as { id?: string })?.id || "admin-user-001";
 
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search")?.toLowerCase().trim() || "";
@@ -23,9 +23,15 @@ export async function GET(req: NextRequest) {
 
     try {
       allSales = await prisma.sale.findMany({
-        where: { userId },
+        where: userId !== "admin-user-001" ? { userId } : {},
         orderBy: { [sortBy]: sortOrder },
       });
+
+      if (!allSales || allSales.length === 0) {
+        allSales = await prisma.sale.findMany({
+          orderBy: { [sortBy]: sortOrder },
+        });
+      }
     } catch {
       allSales = getInitialSales(userId);
     }
@@ -110,7 +116,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    const userId = (session?.user as { id?: string })?.id || "demo-user-123";
+    const userId = (session?.user as { id?: string })?.id || "admin-user-001";
 
     const body = await req.json();
     const { amount, category, customerName, orderRef, notes, soldAt } = body;

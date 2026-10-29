@@ -1,32 +1,32 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { generateRealisticSales } from "../src/lib/mock-data";
-import { startOfWeek, endOfWeek, subWeeks, format, getISOWeek, getYear } from "date-fns";
+import { startOfWeek, endOfWeek, subWeeks, getISOWeek, getYear } from "date-fns";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Starting database seed for Sales Velocity Dashboard...");
+  console.log("🌱 Starting database seed for VelocityPulse Platform...");
 
-  const demoEmail = "demo@acme.com";
+  const adminEmail = "admin@velocitypulse.io";
   const defaultPassword = "password123";
   const passwordHash = await bcrypt.hash(defaultPassword, 10);
 
-  // 1. Upsert Demo User
+  // 1. Upsert Executive Administrator
   const user = await prisma.user.upsert({
-    where: { email: demoEmail },
+    where: { email: adminEmail },
     update: {
       passwordHash,
-      businessName: "Acme Analytics Corp",
+      businessName: "Apex Commerce Group",
     },
     create: {
-      email: demoEmail,
+      email: adminEmail,
       passwordHash,
-      businessName: "Acme Analytics Corp",
+      businessName: "Apex Commerce Group",
     },
   });
 
-  console.log(`✅ User ready: ${user.email} (${user.id})`);
+  console.log(`✅ Administrator ready: ${user.email} (${user.id})`);
 
   // 2. Clear previous sales for clean seed
   const deletedSales = await prisma.sale.deleteMany({
@@ -40,7 +40,6 @@ async function main() {
   console.log(`📦 Inserting ${rawSales.length} realistic sales across 90 days...`);
 
   // Batch insert into Prisma
-  // We can insert in batches of 100
   const batchSize = 100;
   for (let i = 0; i < rawSales.length; i += batchSize) {
     const chunk = rawSales.slice(i, i + batchSize).map((s) => ({
@@ -117,7 +116,7 @@ async function main() {
 
   console.log(`✅ Created ${metricsToInsert.length} weekly metric summaries.`);
   console.log("🎉 Seed finished successfully!");
-  console.log("👉 Login credentials: demo@acme.com / password123");
+  console.log("👉 Login credentials: admin@velocitypulse.io / password123");
 }
 
 main()
@@ -128,4 +127,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
-

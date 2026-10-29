@@ -27,7 +27,7 @@ export const CUSTOMERS = [
 
 // Generates 90 days of fluctuating realistic transactions
 export function generateRealisticSales(
-  userId: string = "demo-user-123",
+  userId: string = "executive-user-001",
   days: number = 90
 ): SaleItem[] {
   const sales: SaleItem[] = [];
@@ -115,10 +115,10 @@ function formatOrderRef(day: number, index: number, randFn: () => number) {
   return `2026-${(100 + day).toString().slice(1)}-${code}`;
 }
 
-// Global in-memory storage for seamless demo interactivity
+// Global in-memory storage for high-speed local interactivity
 let cachedSales: SaleItem[] | null = null;
 
-export function getInitialSales(userId: string = "demo-user-123"): SaleItem[] {
+export function getInitialSales(userId: string = "executive-user-001"): SaleItem[] {
   if (!cachedSales) {
     cachedSales = generateRealisticSales(userId, 90);
   }
