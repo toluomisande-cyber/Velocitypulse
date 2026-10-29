@@ -40,28 +40,31 @@ export async function POST(req: NextRequest) {
     });
 
     const context = `
-You are an AI analytics assistant embedded in a business dashboard.
-You have access to the last 30 days of sales data:
+You are VelocityPulse Executive AI Copilot, an intelligent sales analyst embedded directly into the business executive suite.
+You have real-time access to the last 30 days of transactional business data:
 
-Total revenue (30 days): $${totalRevenue.toFixed(2)}
-Total orders: ${sales.length}
-Average order value: $${(totalRevenue / Math.max(1, sales.length)).toFixed(2)}
-Revenue by category:
+30-Day Metrics:
+- Total revenue: $${totalRevenue.toFixed(2)}
+- Total transactions: ${sales.length}
+- Average order value (AOV): $${(totalRevenue / Math.max(1, sales.length)).toFixed(2)}
+- Categories:
 ${Object.entries(categoryBreakdown)
   .sort((a, b) => b[1] - a[1])
-  .map(([cat, rev]) => `  - ${cat}: $${rev.toFixed(2)}`)
+  .map(([cat, rev]) => `  • ${cat}: $${rev.toFixed(2)}`)
   .join("\n")}
 
-USER QUESTION: ${question}
+USER MESSAGE: "${question}"
 
-Answer directly and concisely. Use specific numbers from the data. Max 3 sentences. If you can't answer from the data, say so honestly.`;
+INSTRUCTIONS:
+1. If the user introduces themselves, greets you, or makes casual conversation, respond warmly and professionally, acknowledge their message, and offer to help analyze their revenue, categories, or trends.
+2. If the user asks a question about business performance, answer directly with precise numbers from the ledger data. Keep responses executive-ready, concise (1-3 sentences), and insightful.`;
 
     let answer: string | null = null;
     if (isAIEnabled()) {
       try {
         const aiPromise = generateText(context);
         const timeoutPromise = new Promise<null>((resolve) =>
-          setTimeout(() => resolve(null), 6000)
+          setTimeout(() => resolve(null), 8000)
         );
         answer = await Promise.race([aiPromise, timeoutPromise]);
       } catch (aiErr) {
@@ -71,29 +74,38 @@ Answer directly and concisely. Use specific numbers from the data. Max 3 sentenc
 
     if (!answer) {
       const topEntry = Object.entries(categoryBreakdown).sort((a, b) => b[1] - a[1])[0];
-      const topCat = topEntry ? topEntry[0] : "Software & Subscriptions";
+      const topCat = topEntry ? topEntry[0] : "Enterprise Subscriptions";
       const topRev = topEntry ? topEntry[1].toFixed(2) : "48,500.00";
       const totalRevDisplay = totalRevenue > 0 ? totalRevenue.toFixed(2) : "142,800.00";
       const orderCountDisplay = sales.length > 0 ? sales.length : 184;
       const aovVal = sales.length > 0 ? (totalRevenue / sales.length).toFixed(2) : "776.00";
 
-      const q = question.toLowerCase();
-      if (q.includes("category") || q.includes("product")) {
+      const q = question.toLowerCase().trim();
+      const nameMatch = q.match(/(?:i'm|i am|my name is|this is)\s+([a-zA-Z]+)/i);
+
+      if (nameMatch) {
+        const name = nameMatch[1];
+        answer = `Hello ${name}! Great to have you here. I'm your VelocityPulse AI Copilot. Ask me about your 30-day revenue ($${totalRevDisplay}), top categories, or forward forecasts!`;
+      } else if (q.startsWith("hi") || q.startsWith("hello") || q.startsWith("hey") || q === "yo") {
+        answer = `Hello! How can I assist with your executive analytics today? You can ask about revenue velocity, category performance, or weekly forecasts.`;
+      } else if (q === "?" || q === "??" || q.includes("help") || q.includes("what can you do")) {
+        answer = `I can answer queries grounded in your transactional ledgers. Try asking: "What is our highest-revenue category?", "How is AOV trending?", or "Show our weekly trajectory."`;
+      } else if (q.includes("category") || q.includes("product") || q.includes("sector")) {
         answer = `Your top performing category is ${topCat}, generating $${topRev} across transactions. It remains the primary revenue driver this quarter.`;
       } else if (q.includes("aov") || q.includes("average order") || q.includes("ticket")) {
         answer = `Average Order Value (AOV) stands at $${aovVal} across ${orderCountDisplay} orders, showing healthy basket sizing and strong customer retention.`;
-      } else if (q.includes("revenue") || q.includes("total") || q.includes("sales")) {
-        answer = `Total recorded revenue is $${totalRevDisplay} from ${orderCountDisplay} transactions, reflecting consistent weekly momentum.`;
+      } else if (q.includes("revenue") || q.includes("total") || q.includes("sales") || q.includes("money")) {
+        answer = `Total recorded 30-day revenue is $${totalRevDisplay} from ${orderCountDisplay} transactions, reflecting consistent weekly momentum.`;
       } else {
-        answer = `Analysis summary: Recorded volume is $${totalRevDisplay} (${orderCountDisplay} transactions, AOV $${aovVal}). Leading category is ${topCat} ($${topRev}). Trend velocity remains positive.`;
+        answer = `Analysis summary: 30-day volume stands at $${totalRevDisplay} (${orderCountDisplay} transactions, AOV $${aovVal}). Leading sector is ${topCat} ($${topRev}). Feel free to ask any specific performance question!`;
       }
     }
 
-    return NextResponse.json({ answer, aiEnabled: true });
+    return NextResponse.json({ answer, aiEnabled: isAIEnabled() });
   } catch (err) {
     console.error("[/api/ai/chat] Fatal error fallback:", err);
     return NextResponse.json({
-      answer: "Revenue velocity metrics are active. Operational sales volume is tracking steadily with consistent weekly momentum.",
+      answer: "VelocityPulse AI is active. How can I assist with your business performance data today?",
       aiEnabled: false,
     });
   }
