@@ -1,0 +1,9 @@
+Amount,Category,Customer,OrderRef,Date,Notes
+3250.00,Enterprise Plan,Vertex Cloud Labs,ORD-9021,2026-10-24 14:30:00,Enterprise annual commitment
+499.00,SaaS Pro Annual,DataFlow Systems,ORD-9022,2026-10-25 09:15:00,Annual upgrade
+149.00,SaaS Pro Monthly,DevSphere Studio,ORD-9023,2026-10-25 11:45:00,Monthly checkout
+4200.00,Consulting Retainer,Global Logistics Inc,ORD-9024,2026-10-26 16:00:00,Architecture advisory retainer
+299.00,Custom Add-on,Fintech Insights,ORD-9025,2026-10-27 10:20:00,Priority support add-on
+750.00,Cloud Data Sync,Beacon Health,ORD-9026,2026-10-28 13:10:00,Data sync add-on
+1850.00,Enterprise Plan,Apex Automations,ORD-9027,2026-10-29 08:45:00,Quarterly tier upgrade
+
