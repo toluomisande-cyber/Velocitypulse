@@ -4,12 +4,13 @@ import React from "react";
 import { KPISummary } from "@/lib/analytics";
 import { formatCurrency, formatPercentage } from "@/lib/utils";
 import {
-  TrendingUp, TrendingDown, ShoppingCart, Receipt, CalendarCheck2, Clock,
+  TrendingUp, TrendingDown, ShoppingCart, Receipt, CalendarCheck2, Clock, UploadCloud,
 } from "lucide-react";
 
 interface KPICardsProps {
   kpis: KPISummary | null;
   isLoading?: boolean;
+  onOpenImport?: () => void;
 }
 
 function SkeletonCard({ dark = false }: { dark?: boolean }) {
@@ -27,7 +28,23 @@ function SkeletonCard({ dark = false }: { dark?: boolean }) {
   );
 }
 
-function DeltaBadge({ pct, inverse = false }: { pct: number; inverse?: boolean }) {
+function DeltaBadge({
+  pct,
+  hasPreviousPeriod,
+  inverse = false,
+}: {
+  pct: number;
+  hasPreviousPeriod: boolean;
+  inverse?: boolean;
+}) {
+  if (!hasPreviousPeriod) {
+    return (
+      <span className="text-[10px] font-mono text-[#8e8b82] px-2 py-0.5 rounded bg-[#8e8b82]/10 border border-[#8e8b82]/20">
+        baseline
+      </span>
+    );
+  }
+
   const up = inverse ? pct <= 0 : pct >= 0;
   return (
     <span
@@ -43,8 +60,8 @@ function DeltaBadge({ pct, inverse = false }: { pct: number; inverse?: boolean }
   );
 }
 
-export function KPICards({ kpis, isLoading }: KPICardsProps) {
-  if (isLoading || !kpis) {
+export function KPICards({ kpis, isLoading, onOpenImport }: KPICardsProps) {
+  if (isLoading) {
     return (
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <SkeletonCard dark />
@@ -57,11 +74,24 @@ export function KPICards({ kpis, isLoading }: KPICardsProps) {
     );
   }
 
+  const currentRevenue = kpis?.currentWeekRevenue ?? 0;
+  const previousRevenue = kpis?.previousWeekRevenue ?? 0;
+  const currentUnits = kpis?.currentWeekUnits ?? 0;
+  const previousUnits = kpis?.previousWeekUnits ?? 0;
+  const currentAOV = kpis?.currentWeekAOV ?? 0;
+  const previousAOV = kpis?.previousWeekAOV ?? 0;
+  const monthRevenue = kpis?.monthRevenueSoFar ?? 0;
+  const runRate = kpis?.projectedMonthRunRate ?? 0;
+
+  const hasSalesHistory = currentUnits > 0 || previousUnits > 0 || monthRevenue > 0;
+  const hasPreviousRevenue = previousRevenue > 0;
+  const hasPreviousUnits = previousUnits > 0;
+  const hasPreviousAOV = previousAOV > 0;
+
   return (
     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-      {/* 1. FEATURED — Revenue (dark navy, full editorial treatment) */}
-      <div className="relative overflow-hidden rounded-xl border border-[#252320] bg-[#181715] p-7 row-span-1">
-        {/* Subtle coral glow in top-right */}
+      {/* 1. Revenue Card */}
+      <div className="relative overflow-hidden rounded-xl border border-[#252320] bg-[#181715] p-7 row-span-1 shadow-card">
         <div className="absolute top-0 right-0 w-40 h-40 rounded-full bg-[#cc785c] opacity-[0.06] blur-3xl pointer-events-none" />
         
         <div className="relative z-10">
@@ -69,7 +99,7 @@ export function KPICards({ kpis, isLoading }: KPICardsProps) {
             <span className="text-[10px] font-mono uppercase tracking-[0.18em] text-[#6c6a64]">
               Total Revenue
             </span>
-            <span className="text-[10px] font-mono text-[#3d3d3a] bg-[#252320] border border-[#3d3d3a] px-2 py-0.5 rounded">
+            <span className="text-[10px] font-mono text-[#a09d96] bg-[#252320] border border-[#3d3d3a] px-2 py-0.5 rounded">
               THIS WEEK
             </span>
           </div>
@@ -81,21 +111,29 @@ export function KPICards({ kpis, isLoading }: KPICardsProps) {
             className="font-serif text-[#faf9f5] leading-none mb-4"
             style={{ fontSize: "clamp(2.8rem, 6vw, 4.5rem)", fontWeight: 400, letterSpacing: "-0.03em" }}
           >
-            {(kpis.currentWeekRevenue / 1000).toFixed(1)}
-            <span className="text-2xl text-[#a09d96] ml-1">k</span>
+            {currentRevenue >= 1000 ? (
+              <>
+                {(currentRevenue / 1000).toFixed(1)}
+                <span className="text-2xl text-[#a09d96] ml-1">k</span>
+              </>
+            ) : (
+              currentRevenue.toLocaleString()
+            )}
           </div>
 
           <div className="flex items-center justify-between pt-4 border-t border-[#252320]">
             <span className="text-xs text-[#6c6a64] font-mono">
-              vs ${(kpis.previousWeekRevenue / 1000).toFixed(1)}k last wk
+              {hasPreviousRevenue
+                ? `vs $${(previousRevenue / 1000).toFixed(1)}k last wk`
+                : "No prior week baseline"}
             </span>
-            <DeltaBadge pct={kpis.revenueChangePct} />
+            <DeltaBadge pct={kpis?.revenueChangePct ?? 0} hasPreviousPeriod={hasPreviousRevenue} />
           </div>
         </div>
       </div>
 
       {/* 2. Units / Sales Count */}
-      <div className="relative overflow-hidden rounded-xl border border-[#e6dfd8] bg-[#faf9f5] p-6">
+      <div className="relative overflow-hidden rounded-xl border border-[#e6dfd8] bg-[#faf9f5] p-6 shadow-card">
         <div className="flex items-center justify-between mb-4">
           <span className="text-[10px] font-mono uppercase tracking-[0.18em] text-[#8e8b82]">
             Weekly Orders
@@ -109,20 +147,20 @@ export function KPICards({ kpis, isLoading }: KPICardsProps) {
           className="font-serif text-[#141413] leading-none mb-1"
           style={{ fontSize: "clamp(2.2rem, 5vw, 3.5rem)", fontWeight: 400, letterSpacing: "-0.03em" }}
         >
-          {kpis.currentWeekUnits.toLocaleString()}
+          {currentUnits.toLocaleString()}
         </div>
         <p className="text-xs text-[#8e8b82] font-mono mb-4">orders placed</p>
 
         <div className="flex items-center justify-between pt-3.5 border-t border-[#e6dfd8]">
           <span className="text-xs text-[#8e8b82] font-mono">
-            vs {kpis.previousWeekUnits.toLocaleString()} last wk
+            {hasPreviousUnits ? `vs ${previousUnits.toLocaleString()} last wk` : "No prior week data"}
           </span>
-          <DeltaBadge pct={kpis.unitsChangePct} />
+          <DeltaBadge pct={kpis?.unitsChangePct ?? 0} hasPreviousPeriod={hasPreviousUnits} />
         </div>
       </div>
 
       {/* 3. AOV */}
-      <div className="relative overflow-hidden rounded-xl border border-[#e6dfd8] bg-[#f5f0e8] p-6">
+      <div className="relative overflow-hidden rounded-xl border border-[#e6dfd8] bg-[#f5f0e8] p-6 shadow-card">
         <div className="flex items-center justify-between mb-4">
           <span className="text-[10px] font-mono uppercase tracking-[0.18em] text-[#8e8b82]">
             Avg. Order Value
@@ -138,27 +176,21 @@ export function KPICards({ kpis, isLoading }: KPICardsProps) {
             className="font-serif text-[#141413] leading-none"
             style={{ fontSize: "clamp(2.2rem, 5vw, 3.5rem)", fontWeight: 400, letterSpacing: "-0.03em" }}
           >
-            {kpis.currentWeekAOV.toFixed(0)}
+            {Math.round(currentAOV).toLocaleString()}
           </span>
         </div>
         <p className="text-xs text-[#8e8b82] font-mono mb-4">per transaction</p>
 
         <div className="flex items-center justify-between pt-3.5 border-t border-[#e6dfd8]">
           <span className="text-xs text-[#8e8b82] font-mono">
-            vs {formatCurrency(kpis.previousWeekAOV)}
+            {hasPreviousAOV ? `vs ${formatCurrency(previousAOV)}` : "No prior baseline"}
           </span>
-          <DeltaBadge pct={kpis.aovChangePct} />
+          <DeltaBadge pct={kpis?.aovChangePct ?? 0} hasPreviousPeriod={hasPreviousAOV} />
         </div>
       </div>
 
-      {/* 4. Run Rate — full-width editorial strip */}
-      <div className="sm:col-span-2 lg:col-span-3 relative overflow-hidden rounded-xl border border-[#cc785c]/25 bg-[#cc785c]/5 p-6">
-        <div className="absolute inset-0 opacity-5"
-          style={{
-            backgroundImage: "linear-gradient(90deg, #cc785c 1px, transparent 1px), linear-gradient(#cc785c 1px, transparent 1px)",
-            backgroundSize: "32px 32px",
-          }}
-        />
+      {/* 4. Run Rate */}
+      <div className="sm:col-span-2 lg:col-span-3 relative overflow-hidden rounded-xl border border-[#cc785c]/25 bg-[#cc785c]/5 p-6 shadow-card">
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-lg bg-[#cc785c]/15 border border-[#cc785c]/25 flex items-center justify-center">
@@ -173,7 +205,7 @@ export function KPICards({ kpis, isLoading }: KPICardsProps) {
                   className="font-serif text-[#cc785c] leading-none"
                   style={{ fontSize: "2.4rem", fontWeight: 400, letterSpacing: "-0.03em" }}
                 >
-                  {formatCurrency(kpis.projectedMonthRunRate)}
+                  {formatCurrency(runRate)}
                 </span>
                 <span className="text-sm text-[#cc785c]/60 font-mono">projected</span>
               </div>
@@ -183,21 +215,14 @@ export function KPICards({ kpis, isLoading }: KPICardsProps) {
           <div className="flex items-center gap-6 text-sm">
             <div className="text-center">
               <p className="text-[10px] font-mono text-[#8e8b82] uppercase tracking-wider mb-1">MTD Revenue</p>
-              <p className="font-serif text-xl text-[#141413]">{formatCurrency(kpis.monthRevenueSoFar)}</p>
+              <p className="font-serif text-xl text-[#141413]">{formatCurrency(monthRevenue)}</p>
             </div>
             <div className="w-px h-10 bg-[#cc785c]/20" />
             <div className="text-center">
               <p className="text-[10px] font-mono text-[#8e8b82] uppercase tracking-wider mb-1">Daily Run Rate</p>
               <p className="font-serif text-xl text-[#141413]" suppressHydrationWarning>
-                {formatCurrency(kpis.monthRevenueSoFar / Math.max(1, new Date().getDate()))}
+                {formatCurrency(monthRevenue / Math.max(1, new Date().getDate()))}
               </p>
-            </div>
-            <div className="w-px h-10 bg-[#cc785c]/20" />
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-[#8e8b82]" />
-              <span className="text-xs text-[#8e8b82] font-mono" suppressHydrationWarning>
-                {new Date().toLocaleDateString("en-US", { month: "long" })} pacing
-              </span>
             </div>
           </div>
         </div>

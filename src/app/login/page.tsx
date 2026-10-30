@@ -8,35 +8,69 @@ import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { VelocityMark } from "@/components/ui/claude-mark";
-import { Lock, Mail, ArrowRight, AlertCircle } from "lucide-react";
+import { Lock, Mail, ArrowRight, AlertCircle, Building2, CheckCircle2 } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
+  const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [businessName, setBusinessName] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
     setLoading(true);
 
     try {
-      const res = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
+      if (isSignUp) {
+        // Register new account
+        const regRes = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, businessName }),
+        });
 
-      if (res?.error) {
-        setError(res.error);
+        const regData = await regRes.json();
+        if (!regRes.ok) {
+          throw new Error(regData.error || "Failed to create account.");
+        }
+
+        // Auto sign-in after successful registration
+        const signInRes = await signIn("credentials", {
+          email,
+          password,
+          redirect: false,
+        });
+
+        if (signInRes?.error) {
+          setSuccess("Account created successfully. Please sign in with your credentials.");
+          setIsSignUp(false);
+        } else {
+          router.push("/");
+          router.refresh();
+        }
       } else {
-        router.push("/");
-        router.refresh();
+        // Sign in existing user
+        const res = await signIn("credentials", {
+          email,
+          password,
+          redirect: false,
+        });
+
+        if (res?.error) {
+          setError(res.error);
+        } else {
+          router.push("/");
+          router.refresh();
+        }
       }
-    } catch {
-      setError("An unexpected error occurred during sign in.");
+    } catch (err: unknown) {
+      setError((err as Error)?.message || "An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -53,22 +87,26 @@ export default function LoginPage() {
           <div>
             <h1 className="font-serif text-3xl font-normal tracking-tight text-ink">VelocityPulse</h1>
             <p className="text-xs text-muted mt-1 font-sans">
-              Executive Sales & Velocity Intelligence
+              Executive Sales & Velocity Intelligence Platform
             </p>
           </div>
         </div>
 
-        {/* Login Card */}
+        {/* Auth Card */}
         <Card variant="card" className="border-hairline bg-surface-card shadow-card">
           <CardHeader className="space-y-1.5 pb-4">
             <div className="flex items-center justify-between">
-              <CardTitle className="font-serif text-2xl font-normal text-ink">Sign In</CardTitle>
+              <CardTitle className="font-serif text-2xl font-normal text-ink">
+                {isSignUp ? "Create Account" : "Sign In"}
+              </CardTitle>
               <Badge variant="coral" className="text-[10px]">
-                ENTERPRISE
+                MULTI-TENANT
               </Badge>
             </div>
             <CardDescription className="text-xs text-muted">
-              Access your executive sales velocity, run rates, and transactional ledgers
+              {isSignUp
+                ? "Start your isolated enterprise analytics workspace"
+                : "Access your executive sales velocity and real-time ledgers"}
             </CardDescription>
           </CardHeader>
 
@@ -80,7 +118,33 @@ export default function LoginPage() {
               </div>
             )}
 
+            {success && (
+              <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                <span>{success}</span>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
+              {isSignUp && (
+                <div>
+                  <label className="block text-xs font-medium text-body mb-1.5">
+                    Organization / Company Name
+                  </label>
+                  <div className="relative">
+                    <Building2 className="absolute left-3 top-3 h-4 w-4 text-muted" />
+                    <Input
+                      type="text"
+                      required
+                      placeholder="Acme Commerce Inc."
+                      value={businessName}
+                      onChange={(e) => setBusinessName(e.target.value)}
+                      className="pl-9.5 text-xs bg-canvas"
+                    />
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-medium text-body mb-1.5">
                   Corporate Email
@@ -120,15 +184,38 @@ export default function LoginPage() {
                 disabled={loading}
                 className="w-full bg-primary hover:bg-primary-active text-on-primary font-medium text-xs mt-3 h-10 shadow-sm"
               >
-                {loading ? "Authenticating..." : "Sign In to Dashboard"}
+                {loading
+                  ? isSignUp
+                    ? "Creating Account..."
+                    : "Authenticating..."
+                  : isSignUp
+                  ? "Register Organization"
+                  : "Sign In to Workspace"}
                 <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
               </Button>
             </form>
+
+            {/* Toggle Sign Up / Sign In */}
+            <div className="pt-2 text-center border-t border-hairline/80">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                  setError(null);
+                  setSuccess(null);
+                }}
+                className="text-xs text-primary hover:underline font-medium"
+              >
+                {isSignUp
+                  ? "Already have an account? Sign In"
+                  : "Don't have an account? Create an Account"}
+              </button>
+            </div>
           </CardContent>
         </Card>
 
         <p className="text-center text-[11px] text-muted">
-          Enterprise Data Platform · End-to-End Encrypted
+          Isolated Multi-Tenant Security · End-to-End Encrypted
         </p>
       </div>
     </div>

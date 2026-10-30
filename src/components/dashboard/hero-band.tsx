@@ -4,12 +4,13 @@ import React, { useEffect, useState, useRef, useMemo } from "react";
 import { ClaudeMark } from "@/components/ui/claude-mark";
 import { formatCurrency } from "@/lib/utils";
 import { KPISummary } from "@/lib/analytics";
-import { Sparkles, MessageSquare, BarChart3 } from "lucide-react";
+import { Sparkles, MessageSquare, BarChart3, UploadCloud } from "lucide-react";
 
 interface HeroBandProps {
   revenue: number;
   changePct: number;
   onOpenChat: () => void;
+  onOpenImport?: () => void;
   kpis?: KPISummary | null;
   totalTransactions?: number;
 }
@@ -50,6 +51,7 @@ export function HeroBand({
   revenue,
   changePct,
   onOpenChat,
+  onOpenImport,
   kpis,
   totalTransactions = 0,
 }: HeroBandProps) {
@@ -58,43 +60,52 @@ export function HeroBand({
   const [tickerIdx, setTickerIdx] = useState(0);
   const [tickerVisible, setTickerVisible] = useState(true);
 
+  const hasPreviousRevenue = (kpis?.previousWeekRevenue ?? 0) > 0;
+  const isZeroState = totalTransactions === 0;
+
   // Dynamically compute real live feed items from actual database metrics
   const tickerItems = useMemo(() => {
+    if (isZeroState) {
+      return [
+        "Welcome to VelocityPulse · Import your sales CSV to initialize analytics",
+        "Multi-tenant isolation active · Only your imported data is calculated",
+        "Record transactions manually or drag-and-drop CSV files to begin",
+      ];
+    }
+
     const items: string[] = [];
 
-    // 1. Exact week-over-week velocity status
     if (kpis) {
       const prevRev = kpis.previousWeekRevenue;
-      items.push(
-        `Revenue ${isUp ? "accelerated +" : "contracted "}${Math.abs(changePct).toFixed(1)}% week-over-week ($${Math.round(revenue).toLocaleString()} vs $${Math.round(prevRev).toLocaleString()})`
-      );
+      if (hasPreviousRevenue) {
+        items.push(
+          `Revenue ${isUp ? "accelerated +" : "contracted "}${Math.abs(changePct).toFixed(1)}% week-over-week ($${Math.round(revenue).toLocaleString()} vs $${Math.round(prevRev).toLocaleString()})`
+        );
+      } else {
+        items.push(
+          `Initial weekly revenue recorded at $${Math.round(revenue).toLocaleString()} across ${kpis.currentWeekUnits} transactions`
+        );
+      }
+
       items.push(
         `Average Order Value at $${kpis.currentWeekAOV.toFixed(2)} (${kpis.aovChangePct >= 0 ? "+" : ""}${kpis.aovChangePct.toFixed(1)}% WoW) across ${kpis.currentWeekUnits} orders placed`
       );
+
       items.push(
         `Month-to-date revenue at $${Math.round(kpis.monthRevenueSoFar).toLocaleString()} · Run rate pacing toward $${Math.round(kpis.projectedMonthRunRate).toLocaleString()}`
       );
-    } else {
-      items.push(
-        `Revenue velocity tracking at ${isUp ? "+" : ""}${changePct.toFixed(1)}% week-over-week`
-      );
     }
 
-    // 2. Transaction ledger verification
     if (totalTransactions > 0) {
       items.push(
-        `AI Intelligence actively evaluating ${totalTransactions.toLocaleString()} transactions recorded in Neon PostgreSQL`
-      );
-    } else {
-      items.push(
-        "Executive AI Intelligence engine actively calculating live ledger statistics"
+        `AI Intelligence actively evaluating ${totalTransactions.toLocaleString()} verified transactions in your ledger`
       );
     }
 
     return items;
-  }, [revenue, changePct, isUp, kpis, totalTransactions]);
+  }, [revenue, changePct, isUp, kpis, totalTransactions, hasPreviousRevenue, isZeroState]);
 
-  // Cycle ticker every 5 seconds
+  // Cycle ticker every 5.5 seconds
   useEffect(() => {
     if (tickerItems.length <= 1) return;
     const interval = setInterval(() => {
@@ -162,25 +173,31 @@ export function HeroBand({
 
             {/* Change badge */}
             <div className="flex items-center gap-3">
-              <div
-                className={`flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-mono border ${
-                  isUp
-                    ? "bg-[#5db872]/10 border-[#5db872]/30 text-[#5db872]"
-                    : "bg-[#c64545]/10 border-[#c64545]/30 text-[#c64545]"
-                }`}
-              >
-                <span className="text-base leading-none">{isUp ? "↑" : "↓"}</span>
-                {isUp ? "+" : ""}{changePct.toFixed(1)}% week-over-week
-              </div>
+              {hasPreviousRevenue ? (
+                <div
+                  className={`flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-mono border ${
+                    isUp
+                      ? "bg-[#5db872]/10 border-[#5db872]/30 text-[#5db872]"
+                      : "bg-[#c64545]/10 border-[#c64545]/30 text-[#c64545]"
+                  }`}
+                >
+                  <span className="text-base leading-none">{isUp ? "↑" : "↓"}</span>
+                  {isUp ? "+" : ""}{changePct.toFixed(1)}% week-over-week
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-mono border bg-[#8e8b82]/10 border-[#8e8b82]/30 text-[#a09d96]">
+                  {isZeroState ? "Awaiting Data Ingestion" : "Initial Weekly Baseline"}
+                </div>
+              )}
               <span className="text-[11px] text-[#6c6a64] font-mono">
-                vs previous 7-day period
+                {hasPreviousRevenue ? "vs previous 7-day period" : "Import CSV to compare periods"}
               </span>
             </div>
           </div>
 
           {/* Right: Action panel */}
           <div className="flex flex-col gap-3 lg:w-72">
-            {/* AI Ticker with REAL dynamic information */}
+            {/* AI Ticker */}
             <div className="rounded-xl bg-[#252320] border border-[#3d3d3a] p-4 min-h-[90px] flex flex-col justify-between">
               <div className="flex items-center gap-2 mb-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#5db872] animate-pulse" />
@@ -196,29 +213,41 @@ export function HeroBand({
               </p>
             </div>
 
-            {/* CTA button */}
-            <button
-              onClick={onOpenChat}
-              className="flex items-center justify-between gap-2 rounded-xl bg-[#cc785c] hover:bg-[#a9583e] text-white px-4 py-3.5 transition-colors group shadow-sm"
-            >
-              <div className="flex items-center gap-2.5">
-                <MessageSquare className="h-4 w-4" />
-                <span className="text-sm font-medium">Ask Your Data</span>
-              </div>
-              <Sparkles className="h-3.5 w-3.5 opacity-70 group-hover:opacity-100 transition-opacity" />
-            </button>
+            {/* CTA buttons */}
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={onOpenChat}
+                className="flex items-center justify-between gap-2 rounded-xl bg-[#cc785c] hover:bg-[#a9583e] text-white px-4 py-3.5 transition-colors group shadow-sm"
+              >
+                <div className="flex items-center gap-2.5">
+                  <MessageSquare className="h-4 w-4" />
+                  <span className="text-sm font-medium">Ask Your Data</span>
+                </div>
+                <Sparkles className="h-3.5 w-3.5 opacity-70 group-hover:opacity-100 transition-opacity" />
+              </button>
+
+              {isZeroState && onOpenImport && (
+                <button
+                  onClick={onOpenImport}
+                  className="flex items-center justify-center gap-2 rounded-xl bg-[#252320] border border-[#cc785c]/40 hover:border-[#cc785c] text-[#faf9f5] px-4 py-2.5 text-xs font-medium transition-colors"
+                >
+                  <UploadCloud className="h-3.5 w-3.5 text-[#cc785c]" />
+                  Import Sales Data (CSV)
+                </button>
+              )}
+            </div>
 
             {/* Real data counts */}
             <div className="flex gap-2">
               <div className="flex-1 rounded-lg border border-[#3d3d3a] bg-[#252320] px-3 py-2.5 text-center">
                 <p className="text-[10px] font-mono text-[#6c6a64] mb-0.5">Transactions</p>
                 <p className="text-sm font-serif text-[#faf9f5]">
-                  {totalTransactions > 0 ? totalTransactions.toLocaleString() : "Syncing..."}
+                  {totalTransactions.toLocaleString()}
                 </p>
               </div>
               <div className="flex-1 rounded-lg border border-[#3d3d3a] bg-[#252320] px-3 py-2.5 text-center">
-                <p className="text-[10px] font-mono text-[#6c6a64] mb-0.5">AI Insights</p>
-                <p className="text-sm font-serif text-[#faf9f5]">Live</p>
+                <p className="text-[10px] font-mono text-[#6c6a64] mb-0.5">AI Engine</p>
+                <p className="text-sm font-serif text-[#5db872]">Active</p>
               </div>
             </div>
           </div>
@@ -230,17 +259,14 @@ export function HeroBand({
         <BarChart3 className="h-3.5 w-3.5 text-[#cc785c] flex-shrink-0" />
         <div className="flex gap-8 text-[10px] font-mono text-[#6c6a64] whitespace-nowrap overflow-hidden">
           <span>
-            <span className="text-[#a09d96]">PLATFORM</span> Sales Intelligence v2.0
+            <span className="text-[#a09d96]">PLATFORM</span> Multi-Tenant SaaS v2.0
           </span>
           <span>
-            <span className="text-[#a09d96]">DB</span> Neon PostgreSQL · London
-          </span>
-          <span>
-            <span className="text-[#a09d96]">AI</span> Real-Time Intelligence Engine
+            <span className="text-[#a09d96]">DB</span> Neon PostgreSQL
           </span>
           <span>
             <span className="text-[#a09d96]">STATUS</span>{" "}
-            <span className="text-[#5db872]">● Live</span>
+            <span className="text-[#5db872]">● Isolated Tenant Secured</span>
           </span>
         </div>
       </div>

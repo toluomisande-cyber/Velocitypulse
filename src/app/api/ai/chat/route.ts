@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { generateText, isAIEnabled } from "@/lib/gemini";
 import { subDays } from "date-fns";
@@ -10,34 +12,53 @@ export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    const userId = (session?.user as { id?: string })?.id;
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { question } = await req.json();
     if (!question || typeof question !== "string") {
       return NextResponse.json({ error: "Missing question" }, { status: 400 });
     }
 
-    // ── 1. Load full sales ledger for rich metric context
-    let sales: Array<{ amount: unknown; category: string; soldAt: Date; customerName?: string | null }> = [];
-    try {
-      const now = new Date();
-      sales = await prisma.sale.findMany({
-        where: { soldAt: { gte: subDays(now, 90) } },
-        select: { amount: true, category: true, soldAt: true, customerName: true },
-        orderBy: { soldAt: "desc" },
-        take: 500,
-      });
-    } catch (dbErr) {
-      console.warn("[/api/ai/chat] DB query warning:", dbErr);
-    }
+    // 1. Fetch THIS tenant's actual transactions
+    const sales = await prisma.sale.findMany({
+      where: {
+        userId,
+        soldAt: { gte: subDays(new Date(), 90) },
+      },
+      select: { amount: true, category: true, soldAt: true, customerName: true },
+      orderBy: { soldAt: "desc" },
+      take: 500,
+    });
 
     const toNum = (v: unknown): number =>
       typeof v === "object" && v !== null && "toNumber" in v
         ? (v as { toNumber(): number }).toNumber()
         : Number(v);
 
-    // ── 2. Compute live metrics from the actual database records
+    // 2. Handle Zero-State for new tenants with no records
+    if (sales.length === 0) {
+      const q = question.toLowerCase();
+      if (q.startsWith("hi") || q.startsWith("hello") || q.includes("who are you") || q.includes("david") || q.includes("name")) {
+        return NextResponse.json({
+          answer: "Hello! I am your VelocityPulse AI Analyst. Your account currently has 0 recorded transactions. Import a sales CSV or log a sale to begin analyzing revenue patterns and trends.",
+          aiEnabled: isAIEnabled(),
+        });
+      }
+      return NextResponse.json({
+        answer: "Your ledger is currently empty with 0 recorded transactions. Import your sales CSV or record a sale via the header button to generate analytics and velocity intelligence.",
+        aiEnabled: isAIEnabled(),
+      });
+    }
+
+    // 3. Compute real metrics on THIS tenant's data
     const salesForAnalytics = sales.map((s) => ({
       id: "x",
-      userId: "x",
+      userId,
       amount: toNum(s.amount),
       currency: "USD",
       category: s.category,
@@ -50,7 +71,6 @@ export async function POST(req: NextRequest) {
     const metrics = calculateDashboardMetrics(salesForAnalytics);
     const { kpis, weeklyBreakdown } = metrics;
 
-    // ── 3. Build category breakdown
     const categoryBreakdown: Record<string, { revenue: number; count: number }> = {};
     sales.forEach((s) => {
       const cat = s.category;
@@ -60,86 +80,57 @@ export async function POST(req: NextRequest) {
       categoryBreakdown[cat].count += 1;
     });
 
-    const sortedCategories = Object.entries(categoryBreakdown)
-      .sort((a, b) => b[1].revenue - a[1].revenue);
-
+    const sortedCategories = Object.entries(categoryBreakdown).sort((a, b) => b[1].revenue - a[1].revenue);
     const topCategory = sortedCategories[0]?.[0] ?? "N/A";
     const topCategoryRevenue = sortedCategories[0]?.[1]?.revenue ?? 0;
 
-    // ── 4. Build the full AI context grounded in live data
+    const totalLedgerRevenue = sales.reduce((sum, s) => sum + toNum(s.amount), 0);
+
     const context = `
-You are VelocityPulse Executive AI Copilot — a sharp, data-grounded sales analyst embedded in the executive dashboard.
-You have real-time access to the live business ledger. Here are the current computed metrics:
+You are VelocityPulse AI Copilot. You are analyzing this authenticated user's real business data:
 
-═══════════════════════════════════════════════
-LIVE BUSINESS METRICS (computed from database)
-═══════════════════════════════════════════════
-
-WEEKLY PERFORMANCE (current vs prior week):
-- This week revenue: $${kpis.currentWeekRevenue.toFixed(2)} (${kpis.revenueChangePct >= 0 ? "+" : ""}${kpis.revenueChangePct.toFixed(1)}% WoW)
-- This week orders: ${kpis.currentWeekUnits} (${kpis.unitsChangePct >= 0 ? "+" : ""}${kpis.unitsChangePct.toFixed(1)}% WoW)
-- Last week revenue: $${kpis.previousWeekRevenue.toFixed(2)}
-- Last week orders: ${kpis.previousWeekUnits}
-
-AVERAGES & RATES:
-- Average Order Value (AOV) this week: $${kpis.currentWeekAOV.toFixed(2)} (${kpis.aovChangePct >= 0 ? "+" : ""}${kpis.aovChangePct.toFixed(1)}% WoW)
+USER METRICS SUMMARY:
+- Total transactions in ledger: ${sales.length}
+- Total ledger revenue (90-day): $${totalLedgerRevenue.toFixed(2)}
+- Current week revenue: $${kpis.currentWeekRevenue.toFixed(2)} (${kpis.previousWeekRevenue > 0 ? `${kpis.revenueChangePct >= 0 ? "+" : ""}${kpis.revenueChangePct.toFixed(1)}% WoW` : "no prior baseline"})
+- Current week orders: ${kpis.currentWeekUnits} (prior week: ${kpis.previousWeekUnits})
+- Average Order Value: $${kpis.currentWeekAOV.toFixed(2)}
 - Month-to-date revenue: $${kpis.monthRevenueSoFar.toFixed(2)}
-- Projected monthly run rate: $${kpis.projectedMonthRunRate.toFixed(2)}
+- Projected month run rate: $${kpis.projectedMonthRunRate.toFixed(2)}
+- Leading category: ${topCategory} ($${topCategoryRevenue.toFixed(2)})
+- Category breakdown:
+${sortedCategories.map(([cat, d]) => `  • ${cat}: $${d.revenue.toFixed(2)} (${d.count} orders)`).join("\n")}
 
-CATEGORY BREAKDOWN (90-day):
-${sortedCategories.map(([cat, data]) => `  • ${cat}: $${data.revenue.toFixed(2)} (${data.count} orders)`).join("\n")}
-
-TOP CATEGORY: ${topCategory} — $${topCategoryRevenue.toFixed(2)}
-
-RECENT WEEKLY TREND (last 10 weeks):
-${weeklyBreakdown.slice(-5).map((w) => `  ${w.weekLabel}: $${w.revenue.toLocaleString()} (${w.velocityPct >= 0 ? "+" : ""}${w.velocityPct}% WoW, ${w.units} orders)`).join("\n")}
-
-TOTAL LEDGER: ${sales.length} transactions over the last 90 days
-
-USER MESSAGE: "${question}"
+USER QUESTION: "${question}"
 
 INSTRUCTIONS:
-- If the user introduces themselves or greets you, respond warmly and briefly, then offer to dive into their data.
-- For business questions, answer with PRECISE numbers from the live metrics above. Never invent or estimate data.
-- Keep responses executive-grade: direct, specific, max 3 sentences.
-- If asked something beyond this data scope, say so honestly.
+- Ground all facts strictly in the numbers above.
+- Never output demo numbers, mock data, or imaginary metrics.
+- Keep responses executive-ready, direct, and concise (1-3 sentences max).
 `;
 
     let answer: string | null = null;
     if (isAIEnabled()) {
       try {
         const aiPromise = generateText(context);
-        const timeoutPromise = new Promise<null>((resolve) =>
-          setTimeout(() => resolve(null), 8000)
-        );
+        const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000));
         answer = await Promise.race([aiPromise, timeoutPromise]);
       } catch (aiErr) {
-        console.warn("[/api/ai/chat] AI generation error:", aiErr);
+        console.warn("[/api/ai/chat] AI error:", aiErr);
       }
     }
 
     if (!answer) {
-      // Intelligent keyword-based fallback using real computed data
+      // Dynamic fallback calculated from this user's data
       const q = question.toLowerCase().trim();
-      const nameMatch = q.match(/(?:i'm|i am|my name is|this is|im)\s+([a-zA-Z]+)/i);
-
-      if (nameMatch) {
-        const name = nameMatch[1];
-        answer = `Welcome, ${name}! I'm your VelocityPulse AI Copilot. Your 90-day ledger shows $${(sales.reduce((s, x) => s + toNum(x.amount), 0)).toFixed(0)} in total revenue across ${sales.length} transactions — ask me anything.`;
-      } else if (q.startsWith("hi") || q.startsWith("hello") || q.startsWith("hey")) {
-        answer = `Hello! Your current week is tracking $${kpis.currentWeekRevenue.toFixed(0)} in revenue (${kpis.revenueChangePct >= 0 ? "+" : ""}${kpis.revenueChangePct.toFixed(1)}% vs last week). What would you like to explore?`;
-      } else if (q.includes("aov") || q.includes("average order") || q.includes("ticket")) {
-        answer = `Current AOV is $${kpis.currentWeekAOV.toFixed(2)} this week (${kpis.aovChangePct >= 0 ? "+" : ""}${kpis.aovChangePct.toFixed(1)}% vs $${kpis.previousWeekAOV.toFixed(2)} last week) across ${kpis.currentWeekUnits} orders.`;
-      } else if (q.includes("category") || q.includes("product") || q.includes("top")) {
-        answer = `Top-performing category over 90 days: ${topCategory} at $${topCategoryRevenue.toFixed(2)}. It leads ${sortedCategories.length} categories in the ledger.`;
+      if (q.includes("category") || q.includes("product") || q.includes("top")) {
+        answer = `Your top category is ${topCategory}, generating $${topCategoryRevenue.toFixed(2)} across transactions in your ledger.`;
+      } else if (q.includes("aov") || q.includes("average order")) {
+        answer = `Your current Average Order Value is $${kpis.currentWeekAOV.toFixed(2)} across ${kpis.currentWeekUnits} orders placed this cycle.`;
       } else if (q.includes("revenue") || q.includes("sales") || q.includes("total")) {
-        answer = `This week: $${kpis.currentWeekRevenue.toFixed(2)} revenue (${kpis.revenueChangePct >= 0 ? "+" : ""}${kpis.revenueChangePct.toFixed(1)}% WoW). Month-to-date: $${kpis.monthRevenueSoFar.toFixed(2)}, projecting $${kpis.projectedMonthRunRate.toFixed(2)} for the full month.`;
-      } else if (q.includes("month") || q.includes("mtd") || q.includes("pacing")) {
-        answer = `Month-to-date revenue is $${kpis.monthRevenueSoFar.toFixed(2)}, pacing to a projected $${kpis.projectedMonthRunRate.toFixed(2)} for the full month at current daily run rate.`;
-      } else if (q.includes("forecast") || q.includes("predict") || q.includes("next")) {
-        answer = `Based on the current ${kpis.revenueChangePct >= 0 ? "positive" : "declining"} trajectory (${kpis.revenueChangePct >= 0 ? "+" : ""}${kpis.revenueChangePct.toFixed(1)}% WoW), the forward projection panel shows the 4-week regression. Open the Forecast chart for full confidence intervals.`;
+        answer = `Current week revenue is $${kpis.currentWeekRevenue.toFixed(2)} (${kpis.currentWeekUnits} orders). Total 90-day ledger revenue is $${totalLedgerRevenue.toFixed(2)} across ${sales.length} transactions.`;
       } else {
-        answer = `Live metrics: $${kpis.currentWeekRevenue.toFixed(0)} this week (${kpis.revenueChangePct >= 0 ? "+" : ""}${kpis.revenueChangePct.toFixed(1)}% WoW), ${kpis.currentWeekUnits} orders, AOV $${kpis.currentWeekAOV.toFixed(2)}. Top sector: ${topCategory}. Ask me anything specific!`;
+        answer = `Live metrics for your organization: $${kpis.currentWeekRevenue.toFixed(2)} revenue this week across ${kpis.currentWeekUnits} orders (AOV $${kpis.currentWeekAOV.toFixed(2)}). Total recorded ledger: ${sales.length} sales.`;
       }
     }
 
@@ -147,7 +138,7 @@ INSTRUCTIONS:
   } catch (err) {
     console.error("[/api/ai/chat] Fatal error:", err);
     return NextResponse.json({
-      answer: "VelocityPulse AI is active and connected to your live ledger. How can I assist with your business performance data today?",
+      answer: "VelocityPulse AI Copilot is active and connected to your tenant ledger.",
       aiEnabled: false,
     });
   }

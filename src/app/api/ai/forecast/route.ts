@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { generateText, isAIEnabled } from "@/lib/gemini";
 import { subDays, format, addDays } from "date-fns";
@@ -7,56 +9,65 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const FALLBACK_FORECASTS = [
-  { week: "Week 1", projected: 72000, low: 64000, high: 80000, confidence: 0.88 },
-  { week: "Week 2", projected: 70000, low: 60000, high: 80000, confidence: 0.78 },
-  { week: "Week 3", projected: 68000, low: 56000, high: 80000, confidence: 0.68 },
-  { week: "Week 4", projected: 66000, low: 52000, high: 80000, confidence: 0.58 },
-];
-
 export async function GET() {
   try {
+    const session = await getServerSession(authOptions);
+    const userId = (session?.user as { id?: string })?.id;
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const now = new Date();
 
-    // Get last 8 weeks of data to identify trend
+    // Fetch this user's sales for the last 8 weeks
     const sales = await prisma.sale.findMany({
-      where: { soldAt: { gte: subDays(now, 56) } },
+      where: {
+        userId,
+        soldAt: { gte: subDays(now, 56) },
+      },
       select: { amount: true, soldAt: true },
       orderBy: { soldAt: "asc" },
     });
+
+    // Zero-State: If user has no sales, return empty zero-state forecasts
+    if (sales.length === 0) {
+      return NextResponse.json({
+        forecasts: [],
+        historicalWeekly: [],
+        slope: 0,
+        trendDirection: "flat",
+        commentary: "No transactions recorded yet. Import your historical sales CSV to activate 4-week forward regression modeling.",
+        aiEnabled: isAIEnabled(),
+        isZeroState: true,
+      });
+    }
 
     const toNum = (v: unknown): number =>
       typeof v === "object" && v !== null && "toNumber" in v
         ? (v as { toNumber(): number }).toNumber()
         : Number(v);
 
-    // Build weekly buckets
     const weekBuckets: Record<string, number[]> = {};
 
     sales.forEach((s) => {
       const d = new Date(s.soldAt);
-      const weekNum = Math.floor(
-        (now.getTime() - d.getTime()) / (7 * 24 * 60 * 60 * 1000)
-      );
+      const weekNum = Math.floor((now.getTime() - d.getTime()) / (7 * 24 * 60 * 60 * 1000));
       const key = `week_${weekNum}`;
       if (!weekBuckets[key]) weekBuckets[key] = [];
       weekBuckets[key].push(toNum(s.amount));
     });
 
-    let weeklySums = Object.entries(weekBuckets)
+    const weeklySums = Object.entries(weekBuckets)
       .sort((a, b) => parseInt(b[0].split("_")[1]) - parseInt(a[0].split("_")[1]))
       .slice(0, 8)
       .reverse()
       .map(([, amounts]) => amounts.reduce((s, a) => s + a, 0));
 
-    if (weeklySums.length === 0) {
-      weeklySums = [84500, 111600, 75800, 74700, 92400, 61500, 83500, 78800];
-    }
-
-    // Simple linear regression for trend
+    // Linear regression for trend
     const n = weeklySums.length;
     const xMean = (n - 1) / 2;
-    const yMean = weeklySums.reduce((s, v) => s + v, 0) / n;
+    const yMean = weeklySums.reduce((s, v) => s + v, 0) / Math.max(1, n);
     let numerator = 0, denominator = 0;
     weeklySums.forEach((y, x) => {
       numerator += (x - xMean) * (y - yMean);
@@ -65,7 +76,6 @@ export async function GET() {
     const slope = denominator !== 0 ? numerator / denominator : 0;
     const intercept = yMean - slope * xMean;
 
-    // Project next 4 weeks with confidence degradation
     const latestX = n;
     const forecasts = [1, 2, 3, 4].map((offset) => {
       const x = latestX + offset - 1;
@@ -82,26 +92,18 @@ export async function GET() {
       };
     });
 
-    // Default heuristic commentary
-    const trendText = slope > 0 ? "positive upward momentum" : slope < 0 ? "slight downward drift" : "stable revenue run-rate";
-    let commentary = `Regression model indicates ${trendText} of approximately $${Math.abs(Math.round(slope)).toLocaleString()}/wk. Maintain current pipeline velocity to meet monthly projections.`;
+    const trendText = slope > 0 ? "positive upward momentum" : slope < 0 ? "velocity deceleration" : "stable volume pacing";
+    let commentary = `Regression model indicates ${trendText} of approximately $${Math.abs(Math.round(slope)).toLocaleString()}/wk across historical sales.`;
 
-    // AI commentary with a 6-second timeout race
-    if (isAIEnabled()) {
+    if (isAIEnabled() && weeklySums.length >= 2) {
       try {
-        const prompt = `You are a business analyst. Based on these weekly revenue figures (in USD), provide a 2-sentence forecast narrative. 
-Historical (oldest to newest): ${weeklySums.map((v) => `$${v.toFixed(0)}`).join(", ")}
-Projected next 4 weeks: ${forecasts.map((f) => `$${f.projected}`).join(", ")}
-Be specific about the trend direction and any risk. 2 sentences max, no bullet points.`;
-
+        const prompt = `Based on these weekly revenues: ${weeklySums.map((v) => `$${v.toFixed(0)}`).join(", ")} and 4-week projections: ${forecasts.map((f) => `$${f.projected}`).join(", ")}, provide a 2-sentence business forecast narrative. Be direct with real numbers, no bullet points.`;
         const aiPromise = generateText(prompt);
-        const timeoutPromise = new Promise<null>((resolve) =>
-          setTimeout(() => resolve(null), 6000)
-        );
+        const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 6000));
         const result = await Promise.race([aiPromise, timeoutPromise]);
         if (result) commentary = result;
       } catch (aiErr) {
-        console.warn("[/api/ai/forecast] AI generation timed out or failed:", aiErr);
+        console.warn("[/api/ai/forecast] AI error:", aiErr);
       }
     }
 
@@ -112,17 +114,18 @@ Be specific about the trend direction and any risk. 2 sentences max, no bullet p
       trendDirection: slope > 0 ? "up" : slope < 0 ? "down" : "flat",
       commentary,
       aiEnabled: isAIEnabled(),
+      isZeroState: false,
     });
   } catch (err) {
-    console.error("[/api/ai/forecast] Error, using fallback:", err);
+    console.error("[/api/ai/forecast] Error:", err);
     return NextResponse.json({
-      forecasts: FALLBACK_FORECASTS,
-      historicalWeekly: [84500, 111600, 75800, 74700, 92400, 61500, 83500, 78800],
-      slope: -2450,
-      trendDirection: "down",
-      commentary:
-        "Predictive regression model active. Revenue trend shows stabilization across primary enterprise segments.",
+      forecasts: [],
+      historicalWeekly: [],
+      slope: 0,
+      trendDirection: "flat",
+      commentary: "Forecast model ready. Waiting for sales transactions.",
       aiEnabled: false,
+      isZeroState: true,
     });
   }
 }

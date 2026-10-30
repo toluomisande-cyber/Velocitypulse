@@ -2,41 +2,62 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { bulkAddSalesToStore } from "@/lib/mock-data";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    const userId = (session?.user as { id?: string })?.id || "admin-user-001";
+    const userId = (session?.user as { id?: string })?.id;
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const body = await req.json();
     const { rows } = body;
 
     if (!Array.isArray(rows) || rows.length === 0) {
       return NextResponse.json(
-        { success: false, error: "No records found to import." },
+        { success: false, error: "No records found in CSV file to import." },
         { status: 400 }
       );
     }
 
-    const validatedSales: any[] = [];
+    const validatedSales: Array<{
+      userId: string;
+      amount: number;
+      currency: string;
+      category: string;
+      customerName: string | null;
+      orderRef: string | null;
+      notes: string | null;
+      soldAt: Date;
+    }> = [];
     const errors: string[] = [];
 
     rows.forEach((row, index) => {
       const rowNum = index + 1;
-      const amount = parseFloat(row.amount || row.Amount || row.price || row.Price || 0);
+      const rawAmount = row.amount || row.Amount || row.price || row.Price || row.revenue || row.Revenue;
+      const amount = parseFloat(rawAmount);
 
       if (isNaN(amount) || amount <= 0) {
-        errors.push(`Row #${rowNum}: Missing or invalid positive amount.`);
+        errors.push(`Row #${rowNum}: Missing or invalid positive numeric amount.`);
         return;
       }
 
-      const category = (row.category || row.Category || "Enterprise Plan").trim();
-      const customerName = (row.customerName || row.Customer || row.customer || "Direct Client").trim();
-      const orderRef = (row.orderRef || row.OrderRef || row.order_id || `CSV-${Date.now().toString().slice(-4)}-${rowNum}`).trim();
-      const notes = (row.notes || row.Notes || "Imported via CSV bulk upload").trim();
+      const category = (row.category || row.Category || row.type || "General Sales").toString().trim();
+      const rawCustomer = row.customerName || row.CustomerName || row.customer || row.Customer || row.client || row.Client;
+      const customerName = rawCustomer ? rawCustomer.toString().trim() : null;
 
-      const rawDate = row.soldAt || row.Date || row.date || row.timestamp;
+      const rawOrder = row.orderRef || row.OrderRef || row.order_id || row.orderId || row.Invoice || row.id;
+      const orderRef = rawOrder ? rawOrder.toString().trim() : `ORD-${Date.now().toString().slice(-4)}-${rowNum}`;
+
+      const rawNotes = row.notes || row.Notes || row.description;
+      const notes = rawNotes ? rawNotes.toString().trim() : null;
+
+      const rawDate = row.soldAt || row.Date || row.date || row.timestamp || row.created_at;
       let soldAt = new Date();
       if (rawDate) {
         const parsed = new Date(rawDate);
@@ -47,9 +68,9 @@ export async function POST(req: NextRequest) {
 
       validatedSales.push({
         userId,
-        amount,
+        amount: parseFloat(amount.toFixed(2)),
         currency: "USD",
-        category,
+        category: category || "Enterprise Plan",
         customerName,
         orderRef,
         notes,
@@ -68,32 +89,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let insertedCount = 0;
-
-    try {
-      const res = await prisma.sale.createMany({
-        data: validatedSales,
-      });
-      insertedCount = res.count;
-    } catch {
-      // In-memory fallback
-      const fallbackInserted = bulkAddSalesToStore(validatedSales);
-      insertedCount = fallbackInserted.length;
-    }
+    // Insert batch directly into PostgreSQL scoped to this tenant
+    const res = await prisma.sale.createMany({
+      data: validatedSales,
+    });
 
     return NextResponse.json({
       success: true,
-      message: `Successfully imported ${insertedCount} transactions.`,
-      importedCount: insertedCount,
+      message: `Successfully imported ${res.count} sales records into your database.`,
+      importedCount: res.count,
       errorsCount: errors.length,
-      errors: errors.slice(0, 5), // return first 5 validation warnings if any
+      errors: errors.slice(0, 5),
     });
   } catch (error) {
-    console.error("Bulk Import API Error:", error);
+    console.error("[/api/sales/bulk] Bulk import error:", error);
     return NextResponse.json(
-      { success: false, error: "Failed to process bulk import." },
+      { success: false, error: "Failed to process bulk import in database." },
       { status: 500 }
     );
   }
 }
-

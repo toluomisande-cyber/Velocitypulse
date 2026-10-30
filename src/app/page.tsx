@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Header } from "@/components/dashboard/header";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { KPICards } from "@/components/dashboard/kpi-cards";
@@ -15,9 +15,9 @@ import { AIForecastPanel } from "@/components/dashboard/ai-forecast-panel";
 import { AIChatDrawer } from "@/components/dashboard/ai-chat-drawer";
 import { HeroBand } from "@/components/dashboard/hero-band";
 import { KPISummary, DailyVelocityPoint, WeeklyBarPoint, VelocityGaugeData } from "@/lib/analytics";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
+import { UploadCloud, PlusCircle } from "lucide-react";
 
-// Reusable fade-in-up animation variant
 const fadeInUp = {
   hidden: { opacity: 0, y: 24 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" as const } },
@@ -28,10 +28,10 @@ const staggerContainer = {
   visible: { transition: { staggerChildren: 0.08 } },
 };
 
-export default function DashboardPage() {
+export default function DashboardPage({ defaultTab = "overview" }: { defaultTab?: string }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(defaultTab);
 
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -75,6 +75,8 @@ export default function DashboardPage() {
     setRefreshTrigger((prev) => prev + 1);
   };
 
+  const isZeroState = !loading && totalTransactions === 0;
+
   return (
     <div className="flex min-h-screen bg-[#faf9f5] text-[#141413] font-sans antialiased" style={{ scrollBehavior: "smooth" }}>
       <Sidebar
@@ -104,10 +106,51 @@ export default function DashboardPage() {
               revenue={kpis?.currentWeekRevenue ?? 0}
               changePct={kpis?.revenueChangePct ?? 0}
               onOpenChat={() => setIsChatOpen(true)}
+              onOpenImport={() => setIsCsvUploadOpen(true)}
               kpis={kpis}
               totalTransactions={totalTransactions}
             />
           </section>
+
+          {/* ── ZERO STATE BANNER (Shown when account is new with 0 data) */}
+          {isZeroState && (
+            <section className="px-5 pb-6 md:px-8 lg:px-10 max-w-7xl mx-auto w-full">
+              <div className="rounded-2xl border-2 border-dashed border-[#cc785c]/40 bg-[#cc785c]/5 p-8 text-center flex flex-col items-center justify-center space-y-4">
+                <div className="w-14 h-14 rounded-2xl bg-[#cc785c]/15 text-[#cc785c] flex items-center justify-center border border-[#cc785c]/30 shadow-subtle">
+                  <UploadCloud className="h-7 w-7" />
+                </div>
+                <div className="max-w-md space-y-1">
+                  <h3 className="font-serif text-2xl font-normal text-ink">Welcome to Your Workspace</h3>
+                  <p className="text-xs text-muted leading-relaxed">
+                    Your sales ledger is currently empty. Import a CSV file or record transactions to activate real-time sales velocity, KPI pace, and AI forecasting.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                  <button
+                    onClick={() => setIsCsvUploadOpen(true)}
+                    className="inline-flex items-center gap-2 bg-[#cc785c] hover:bg-[#a9583e] text-white text-xs font-medium px-5 py-2.5 rounded-lg transition-colors shadow-sm"
+                  >
+                    <UploadCloud className="h-4 w-4" />
+                    Import Sales Data (CSV)
+                  </button>
+                  <button
+                    onClick={() => setIsNewSaleOpen(true)}
+                    className="inline-flex items-center gap-2 bg-canvas hover:bg-surface-card border border-hairline text-ink text-xs font-medium px-5 py-2.5 rounded-lg transition-colors"
+                  >
+                    <PlusCircle className="h-4 w-4 text-primary" />
+                    Record Individual Sale
+                  </button>
+                  <a
+                    href="/sample_sales_template.csv"
+                    download
+                    className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline px-3 py-2 font-mono"
+                  >
+                    Download CSV Template ↓
+                  </a>
+                </div>
+              </div>
+            </section>
+          )}
 
           {/* ── BAND 2: KPI Numbers */}
           <section className="px-5 pb-10 md:px-8 lg:px-10 max-w-7xl mx-auto w-full">
@@ -127,7 +170,7 @@ export default function DashboardPage() {
                 </h2>
               </motion.div>
               <motion.div variants={fadeInUp}>
-                <KPICards kpis={kpis} isLoading={loading} />
+                <KPICards kpis={kpis} isLoading={loading} onOpenImport={() => setIsCsvUploadOpen(true)} />
               </motion.div>
             </motion.div>
           </section>

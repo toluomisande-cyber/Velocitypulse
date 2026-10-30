@@ -300,8 +300,16 @@ export function SalesDataTable({ refreshTrigger }: SalesDataTableProps) {
                 </tr>
               ) : sales.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-muted">
-                    No matching sales records found. Try adjusting your search or filters.
+                  <td colSpan={5} className="p-12 text-center text-muted">
+                    <div className="flex flex-col items-center justify-center space-y-3">
+                      <div className="h-10 w-10 rounded-full bg-surface-card flex items-center justify-center text-muted border border-hairline">
+                        <Receipt className="h-5 w-5" />
+                      </div>
+                      <p className="text-sm font-medium text-ink">No sales records found</p>
+                      <p className="text-xs text-muted max-w-sm">
+                        No transactions have been recorded yet in this workspace. Upload your sales CSV or record a sale to populate your log.
+                      </p>
+                    </div>
                   </td>
                 </tr>
               ) : (

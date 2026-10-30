@@ -1,16 +1,16 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   TrendingUp,
-  BarChart3,
   Receipt,
   FileSpreadsheet,
   ChevronLeft,
   ChevronRight,
   Activity,
-  Sparkles,
   Brain,
 } from "lucide-react";
 import { ClaudeMark } from "@/components/ui/claude-mark";
@@ -19,36 +19,44 @@ import { cn } from "@/lib/utils";
 interface SidebarProps {
   isCollapsed: boolean;
   onToggleCollapse: () => void;
-  activeTab: string;
-  onSelectTab: (tab: string) => void;
+  activeTab?: string;
+  onSelectTab?: (tab: string) => void;
   mobileOpen: boolean;
   onCloseMobile: () => void;
 }
 
 const navItems = [
-  { id: "overview", label: "Dashboard Overview", icon: LayoutDashboard },
-  { id: "ai", label: "AI Intelligence", icon: Brain },
-  { id: "velocity", label: "Weekly Sales Velocity", icon: Activity },
-  { id: "trends", label: "WoW Revenue Trends", icon: TrendingUp },
-  { id: "transactions", label: "Sales Log & Table", icon: Receipt },
-  { id: "ingestion", label: "Data Ingestion (CSV)", icon: FileSpreadsheet },
+  { id: "overview", label: "Dashboard Overview", href: "/overview", icon: LayoutDashboard },
+  { id: "ai", label: "AI Intelligence", href: "/intelligence", icon: Brain },
+  { id: "velocity", label: "Weekly Sales Velocity", href: "/velocity", icon: Activity },
+  { id: "trends", label: "WoW Revenue Trends", href: "/trends", icon: TrendingUp },
+  { id: "transactions", label: "Sales Log & Table", href: "/transactions", icon: Receipt },
+  { id: "ingestion", label: "Data Ingestion (CSV)", href: "/ingestion", icon: FileSpreadsheet },
 ];
 
 export function Sidebar({
   isCollapsed,
   onToggleCollapse,
-  activeTab,
+  activeTab = "overview",
   onSelectTab,
   mobileOpen,
   onCloseMobile,
 }: SidebarProps) {
-  const handleNavClick = (id: string) => {
-    onSelectTab(id);
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const handleNavClick = (e: React.MouseEvent, item: typeof navItems[0]) => {
     onCloseMobile();
-    // Smooth scroll to section
-    const el = document.getElementById(`section-${id}`);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    // If on the root dashboard page, smooth scroll to section
+    if (pathname === "/" || pathname === item.href) {
+      if (onSelectTab) onSelectTab(item.id);
+      const el = document.getElementById(`section-${item.id}`);
+      if (el) {
+        e.preventDefault();
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
     }
   };
 
@@ -73,8 +81,8 @@ export function Sidebar({
       >
         {/* Brand / Logo Section */}
         <div className="flex h-16 shrink-0 items-center justify-between border-b border-hairline px-4 bg-canvas/60">
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-canvas border border-hairline shadow-subtle">
+          <Link href="/" className="flex items-center gap-3 overflow-hidden group">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-canvas border border-hairline shadow-subtle group-hover:border-primary/50 transition-colors">
               <ClaudeMark className="h-5 w-5 text-primary" />
             </div>
             {!isCollapsed && (
@@ -83,11 +91,11 @@ export function Sidebar({
                   VelocityPulse
                 </span>
                 <span className="truncate text-[10px] text-muted font-sans">
-                  Executive Suite
+                  SaaS Analytics Suite
                 </span>
               </div>
             )}
-          </div>
+          </Link>
 
           <button
             onClick={onToggleCollapse}
@@ -112,11 +120,16 @@ export function Sidebar({
 
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = activeTab === item.id;
+            const isActive =
+              activeTab === item.id ||
+              pathname === item.href ||
+              (item.id === "overview" && pathname === "/");
+
             return (
-              <button
+              <Link
                 key={item.id}
-                onClick={() => handleNavClick(item.id)}
+                href={item.href}
+                onClick={(e) => handleNavClick(e, item)}
                 className={cn(
                   "group flex w-full items-center gap-3 rounded-md px-3 py-2 text-xs font-medium transition-all",
                   isActive
@@ -137,7 +150,7 @@ export function Sidebar({
                 {isActive && !isCollapsed && (
                   <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
                 )}
-              </button>
+              </Link>
             );
           })}
         </nav>
@@ -160,7 +173,7 @@ export function Sidebar({
                   Neon Postgres Connected
                 </p>
                 <p className="truncate text-[10px] text-muted font-mono">
-                  aws-eu-west-2 • Live
+                  Multi-Tenant Tenant Isolation
                 </p>
               </div>
             )}

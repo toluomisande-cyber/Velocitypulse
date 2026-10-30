@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { TrendingUp, TrendingDown, Minus, Sparkles } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Sparkles, BarChart2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { ClaudeMark } from "@/components/ui/claude-mark";
@@ -21,6 +21,7 @@ interface ForecastData {
   trendDirection: "up" | "down" | "flat";
   commentary: string | null;
   aiEnabled: boolean;
+  isZeroState?: boolean;
 }
 
 export function AIForecastPanel({ className = "" }: { className?: string }) {
@@ -34,7 +35,7 @@ export function AIForecastPanel({ className = "" }: { className?: string }) {
         return r.json();
       })
       .then((res) => {
-        if (res && Array.isArray(res.forecasts)) {
+        if (res) {
           setData(res);
         }
       })
@@ -43,6 +44,8 @@ export function AIForecastPanel({ className = "" }: { className?: string }) {
       })
       .finally(() => setLoading(false));
   }, []);
+
+  const hasData = data && Array.isArray(data.forecasts) && data.forecasts.length > 0;
 
   const TrendIcon =
     data?.trendDirection === "up"
@@ -58,7 +61,7 @@ export function AIForecastPanel({ className = "" }: { className?: string }) {
       ? "#c64545"
       : "#a09d96";
 
-  const chartData = data
+  const chartData = hasData
     ? [
         ...(data.historicalWeekly?.slice(-4).map((rev, i) => ({
           label: `W-${4 - i}`,
@@ -92,7 +95,7 @@ export function AIForecastPanel({ className = "" }: { className?: string }) {
             </h3>
           </div>
         </div>
-        {data && (
+        {hasData && (
           <div
             className="flex items-center gap-1.5 text-sm font-medium"
             style={{ color: trendColor }}
@@ -112,6 +115,16 @@ export function AIForecastPanel({ className = "" }: { className?: string }) {
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="h-12 bg-[#efe9de] rounded-lg animate-pulse" />
             ))}
+          </div>
+        ) : !hasData ? (
+          <div className="py-10 text-center flex flex-col items-center justify-center space-y-3">
+            <div className="w-10 h-10 rounded-full bg-[#efe9de] flex items-center justify-center text-[#8e8b82]">
+              <BarChart2 className="h-5 w-5" />
+            </div>
+            <p className="text-sm font-medium text-[#141413]">Awaiting Transaction History</p>
+            <p className="text-xs text-[#8e8b82] max-w-xs leading-relaxed">
+              Import historical sales data to project your upcoming 4-week revenue trend and confidence intervals.
+            </p>
           </div>
         ) : (
           <>

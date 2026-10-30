@@ -6,9 +6,9 @@ import { prisma } from "./prisma";
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
-      name: "Executive Authentication",
+      name: "Corporate Credentials",
       credentials: {
-        email: { label: "Email", type: "email", placeholder: "admin@velocitypulse.io" },
+        email: { label: "Email", type: "email", placeholder: "executive@company.com" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
@@ -18,39 +18,34 @@ export const authOptions: NextAuthOptions = {
 
         const email = credentials.email.toLowerCase().trim();
 
-        // 1. Verify against database
+        // Verify against real database
         try {
           const user = await prisma.user.findUnique({
             where: { email },
           });
 
-          if (user && user.passwordHash) {
-            const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
-            if (isValid) {
-              return {
-                id: user.id,
-                email: user.email,
-                name: user.businessName,
-              };
-            }
+          if (!user || !user.passwordHash) {
+            throw new Error("No account found with this email address. Please create an account.");
           }
-        } catch (dbErr) {
-          console.warn("[Auth] Database check error:", dbErr);
-        }
 
-        // 2. Executive access verification for resilient operations
-        if (
-          (email === "admin@velocitypulse.io" || email === "executive@company.com") &&
-          credentials.password === "password123"
-        ) {
+          const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
+          if (!isValid) {
+            throw new Error("Invalid password. Please check your credentials.");
+          }
+
           return {
-            id: "exec-user-001",
-            email: email,
-            name: "Apex Commerce Group",
+            id: user.id,
+            email: user.email,
+            name: user.businessName,
           };
+        } catch (err: unknown) {
+          const msg = (err as Error)?.message;
+          if (msg && (msg.includes("No account") || msg.includes("Invalid password") || msg.includes("Please enter"))) {
+            throw err;
+          }
+          console.error("[Auth] Database verification error:", err);
+          throw new Error("Authentication service is temporarily unavailable. Please try again.");
         }
-
-        throw new Error("Invalid email or password");
       },
     }),
   ],
@@ -78,5 +73,5 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/login",
   },
-  secret: process.env.NEXTAUTH_SECRET || "velocitypulse-executive-secret-key-prod-32chars",
+  secret: process.env.NEXTAUTH_SECRET || "velocitypulse-production-secret-key-32chars",
 };

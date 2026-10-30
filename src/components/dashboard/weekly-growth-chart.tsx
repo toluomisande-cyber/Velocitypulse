@@ -15,7 +15,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { DailyVelocityPoint } from "@/lib/analytics";
 import { formatCurrency } from "@/lib/utils";
-import { Activity, Zap } from "lucide-react";
+import { Activity, Zap, TrendingUp } from "lucide-react";
 
 interface WeeklyGrowthChartProps {
   data: DailyVelocityPoint[];
@@ -31,6 +31,7 @@ export function WeeklyGrowthChart({ data }: WeeklyGrowthChartProps) {
   const totalPrev = data.reduce((acc, d) => acc + d.previousWeek, 0);
   const delta = totalCurr - totalPrev;
   const deltaPct = totalPrev > 0 ? (delta / totalPrev) * 100 : 0;
+  const isZeroState = totalCurr === 0 && totalPrev === 0;
 
   return (
     <Card variant="dark" className="border-surface-dark-elevated bg-surface-dark text-on-dark shadow-dark">
@@ -76,157 +77,170 @@ export function WeeklyGrowthChart({ data }: WeeklyGrowthChartProps) {
         </div>
       </CardHeader>
 
-      <CardContent className="pt-4">
-        <div className="h-[280px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-              <defs>
-                {/* Velocity Pulse Coral Gradient */}
-                <linearGradient id="velocityCoralGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#cc785c" stopOpacity={0.45} />
-                  <stop offset="95%" stopColor="#cc785c" stopOpacity={0.0} />
-                </linearGradient>
-                {/* Muted Baseline Gradient */}
-                <linearGradient id="velocityBaselineGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#a09d96" stopOpacity={0.18} />
-                  <stop offset="95%" stopColor="#a09d96" stopOpacity={0.0} />
-                </linearGradient>
-              </defs>
-
-              <CartesianGrid strokeDasharray="3 3" stroke="#252320" vertical={false} />
-
-              <XAxis
-                dataKey="dayShort"
-                stroke="#8e8b82"
-                fontSize={12}
-                tickLine={false}
-                axisLine={{ stroke: "#252320" }}
-              />
-
-              <YAxis
-                stroke="#8e8b82"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-              />
-
-              <Tooltip
-                content={({ active, payload, label }) => {
-                  if (active && payload && payload.length) {
-                    const curr = Number(payload.find((p) => p.dataKey === currentKey)?.value || 0);
-                    const prev = Number(payload.find((p) => p.dataKey === previousKey)?.value || 0);
-                    const diff = curr - prev;
-                    const diffPct = prev > 0 ? (diff / prev) * 100 : 0;
-
-                    return (
-                      <div className="rounded-md border border-surface-dark-elevated bg-surface-dark-elevated p-3.5 shadow-xl text-on-dark min-w-[210px]">
-                        <p className="font-serif text-sm font-normal text-on-dark border-b border-surface-dark-soft pb-1.5 mb-2">
-                          {label} (Velocity Breakdown)
-                        </p>
-                        <div className="space-y-1.5 text-xs">
-                          <div className="flex items-center justify-between gap-4">
-                            <span className="flex items-center gap-1.5 text-primary font-medium">
-                              <span className="h-2 w-2 rounded-full bg-primary" />
-                              Current Week:
-                            </span>
-                            <span className="font-mono font-semibold text-on-dark">
-                              {formatCurrency(curr)}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center justify-between gap-4">
-                            <span className="flex items-center gap-1.5 text-on-dark-soft">
-                              <span className="h-2 w-2 rounded-full bg-muted-soft" />
-                              Previous Week:
-                            </span>
-                            <span className="font-mono text-on-dark-soft">
-                              {formatCurrency(prev)}
-                            </span>
-                          </div>
-
-                          <div className="pt-2 mt-1 border-t border-surface-dark-soft flex items-center justify-between gap-4 text-[11px]">
-                            <span className="text-on-dark-soft">Velocity Delta:</span>
-                            <span
-                              className={`font-mono font-medium ${
-                                diff >= 0 ? "text-primary" : "text-error"
-                              }`}
-                            >
-                              {diff >= 0 ? "+" : ""}
-                              {formatCurrency(diff)} ({diffPct >= 0 ? "+" : ""}
-                              {diffPct.toFixed(1)}%)
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-              />
-
-              <Legend
-                verticalAlign="top"
-                align="right"
-                wrapperStyle={{ paddingBottom: "12px", fontSize: "12px" }}
-                formatter={(value) => {
-                  return (
-                    <span className="text-on-dark-soft text-xs">
-                      {value === currentKey ? "Current Week (Live)" : "Previous Week (Benchmark)"}
-                    </span>
-                  );
-                }}
-              />
-
-              {/* Previous Week Baseline */}
-              <Area
-                type="monotone"
-                dataKey={previousKey}
-                name={previousKey}
-                stroke="#8e8b82"
-                strokeWidth={1.5}
-                strokeDasharray="4 4"
-                fillOpacity={1}
-                fill="url(#velocityBaselineGrad)"
-              />
-
-              {/* Current Week Coral Curve */}
-              <Area
-                type="monotone"
-                dataKey={currentKey}
-                name={currentKey}
-                stroke="#cc785c"
-                strokeWidth={2.5}
-                fillOpacity={1}
-                fill="url(#velocityCoralGrad)"
-                activeDot={{ r: 6, fill: "#cc785c", stroke: "#181715", strokeWidth: 2 }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Bottom velocity insight pill */}
-        <div className="mt-4 flex items-center justify-between rounded-md border border-surface-dark-elevated bg-surface-dark-soft px-3.5 py-2.5 text-xs">
-          <div className="flex items-center gap-2">
-            <Zap className="h-3.5 w-3.5 text-primary" />
-            <span className="text-on-dark-soft">
-              {delta >= 0 ? "Velocity Ahead:" : "Velocity Behind:"}
-            </span>
-            <span
-              className={`font-mono font-semibold ${
-                delta >= 0 ? "text-primary" : "text-error"
+      <CardContent className="pt-2">
+        {/* KPI Strip */}
+        <div className="mb-4 grid grid-cols-2 gap-2 rounded-md border border-surface-dark-elevated bg-surface-dark-soft p-3 sm:grid-cols-3">
+          <div>
+            <span className="text-[11px] text-on-dark-soft">This Week:</span>
+            <p className="font-mono text-base font-semibold text-on-dark">
+              {formatCurrency(totalCurr)}
+            </p>
+          </div>
+          <div>
+            <span className="text-[11px] text-on-dark-soft">Prior Week:</span>
+            <p className="font-mono text-base font-semibold text-on-dark-soft">
+              {totalPrev > 0 ? formatCurrency(totalPrev) : "—"}
+            </p>
+          </div>
+          <div className="col-span-2 sm:col-span-1">
+            <span className="text-[11px] text-on-dark-soft">Delta:</span>
+            <p
+              className={`font-mono text-base font-semibold ${
+                delta > 0
+                  ? "text-primary"
+                  : delta < 0
+                  ? "text-error"
+                  : "text-on-dark-soft"
               }`}
             >
-              {delta >= 0 ? "+" : ""}
-              {formatCurrency(delta)} ({deltaPct >= 0 ? "+" : ""}
-              {deltaPct.toFixed(1)}% vs prior week)
-            </span>
+              {totalPrev > 0 ? (
+                <>
+                  {delta >= 0 ? "+" : ""}
+                  {formatCurrency(delta)} ({deltaPct >= 0 ? "+" : ""}
+                  {deltaPct.toFixed(1)}%)
+                </>
+              ) : (
+                "—"
+              )}
+            </p>
           </div>
-
-          <span className="text-[11px] text-on-dark-soft hidden sm:inline">
-            Normalized 7-day pacing window
-          </span>
         </div>
+
+        {isZeroState ? (
+          <div className="h-64 flex flex-col items-center justify-center space-y-2 border border-surface-dark-elevated rounded-lg bg-surface-dark-soft/50 text-center p-6">
+            <Activity className="h-8 w-8 text-[#cc785c] opacity-60" />
+            <p className="text-sm font-medium text-on-dark">Awaiting Weekly Velocity Data</p>
+            <p className="text-xs text-on-dark-soft max-w-sm">
+              Your daily Monday through Sunday velocity curve will render automatically once sales are recorded.
+            </p>
+          </div>
+        ) : (
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={data}
+                margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="velocityCoralGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#cc785c" stopOpacity={0.35} />
+                    <stop offset="95%" stopColor="#cc785c" stopOpacity={0.0} />
+                  </linearGradient>
+                  <linearGradient id="velocityBaselineGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8e8b82" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#8e8b82" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#252320"
+                  vertical={false}
+                />
+
+                <XAxis
+                  dataKey="dayShort"
+                  stroke="#6c6a64"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={{ stroke: "#252320" }}
+                />
+
+                <YAxis
+                  stroke="#6c6a64"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(val) => `$${val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}`}
+                />
+
+                <Tooltip
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      const curr = Number(payload.find((p) => p.dataKey === currentKey)?.value || 0);
+                      const prev = Number(payload.find((p) => p.dataKey === previousKey)?.value || 0);
+                      const diff = curr - prev;
+
+                      return (
+                        <div className="rounded-md border border-surface-dark-elevated bg-surface-dark p-3 text-xs shadow-dark">
+                          <p className="font-semibold text-on-dark border-b border-surface-dark-elevated pb-1 mb-1.5 font-serif">
+                            {label} ({viewMode === "daily" ? "Daily" : "Cumulative"})
+                          </p>
+                          <div className="space-y-1 font-mono">
+                            <p className="text-primary flex items-center justify-between gap-4">
+                              <span>This Week:</span>
+                              <span className="font-semibold">{formatCurrency(curr)}</span>
+                            </p>
+                            <p className="text-on-dark-soft flex items-center justify-between gap-4">
+                              <span>Prior Week:</span>
+                              <span>{prev > 0 ? formatCurrency(prev) : "—"}</span>
+                            </p>
+                            {prev > 0 && (
+                              <p
+                                className={`pt-1 border-t border-surface-dark-elevated flex items-center justify-between gap-4 ${
+                                  diff >= 0 ? "text-accent-teal" : "text-error"
+                                }`}
+                              >
+                                <span>Variance:</span>
+                                <span>
+                                  {diff >= 0 ? "+" : ""}
+                                  {formatCurrency(diff)}
+                                </span>
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+
+                <Legend
+                  verticalAlign="top"
+                  align="right"
+                  height={30}
+                  iconType="circle"
+                  iconSize={7}
+                  formatter={(value) => (
+                    <span className="text-[11px] font-sans text-on-dark-soft capitalize">
+                      {value === currentKey ? "Current Week" : "Prior Baseline"}
+                    </span>
+                  )}
+                />
+
+                <Area
+                  type="monotone"
+                  dataKey={previousKey}
+                  name={previousKey}
+                  stroke="#6c6a64"
+                  strokeWidth={2}
+                  strokeDasharray="4 4"
+                  fill="url(#velocityBaselineGrad)"
+                />
+
+                <Area
+                  type="monotone"
+                  dataKey={currentKey}
+                  name={currentKey}
+                  stroke="#cc785c"
+                  strokeWidth={2.5}
+                  fill="url(#velocityCoralGrad)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

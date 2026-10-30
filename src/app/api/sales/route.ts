@@ -2,12 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getInitialSales, addSaleToStore } from "@/lib/mock-data";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    const userId = (session?.user as { id?: string })?.id || "admin-user-001";
+    const userId = (session?.user as { id?: string })?.id;
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search")?.toLowerCase().trim() || "";
@@ -19,84 +25,43 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
     const limit = Math.max(1, parseInt(searchParams.get("limit") || "10", 10));
 
-    let allSales = [];
+    // Construct Prisma WHERE clause strictly scoped to userId
+    const whereClause: any = { userId };
 
-    try {
-      allSales = await prisma.sale.findMany({
-        where: userId !== "admin-user-001" ? { userId } : {},
+    if (category !== "all") {
+      whereClause.category = category;
+    }
+
+    if (startDate || endDate) {
+      whereClause.soldAt = {};
+      if (startDate) whereClause.soldAt.gte = new Date(startDate);
+      if (endDate) whereClause.soldAt.lte = new Date(endDate);
+    }
+
+    if (search) {
+      whereClause.OR = [
+        { customerName: { contains: search, mode: "insensitive" } },
+        { orderRef: { contains: search, mode: "insensitive" } },
+        { category: { contains: search, mode: "insensitive" } },
+        { notes: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    const [totalCount, sales] = await Promise.all([
+      prisma.sale.count({ where: whereClause }),
+      prisma.sale.findMany({
+        where: whereClause,
         orderBy: { [sortBy]: sortOrder },
-      });
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+    ]);
 
-      if (!allSales || allSales.length === 0) {
-        allSales = await prisma.sale.findMany({
-          orderBy: { [sortBy]: sortOrder },
-        });
-      }
-    } catch {
-      allSales = getInitialSales(userId);
-    }
-
-    if (!allSales || allSales.length === 0) {
-      allSales = getInitialSales(userId);
-    }
-
-    // Filter in-memory for fast and dynamic search
-    let filtered = allSales.filter((item) => {
-      // Category filter
-      if (category !== "all" && item.category !== category) {
-        return false;
-      }
-
-      // Search term
-      if (search) {
-        const matchesCustomer = item.customerName?.toLowerCase().includes(search);
-        const matchesRef = item.orderRef?.toLowerCase().includes(search);
-        const matchesCat = item.category?.toLowerCase().includes(search);
-        const matchesNotes = item.notes?.toLowerCase().includes(search);
-        if (!matchesCustomer && !matchesRef && !matchesCat && !matchesNotes) {
-          return false;
-        }
-      }
-
-      // Date range filter
-      if (startDate) {
-        const d = new Date(item.soldAt).getTime();
-        const start = new Date(startDate).getTime();
-        if (d < start) return false;
-      }
-
-      if (endDate) {
-        const d = new Date(item.soldAt).getTime();
-        const end = new Date(endDate).getTime();
-        if (d > end) return false;
-      }
-
-      return true;
-    });
-
-    // Sorting
-    filtered.sort((a, b) => {
-      let valA: any = a[sortBy as keyof typeof a];
-      let valB: any = b[sortBy as keyof typeof b];
-
-      if (sortBy === "soldAt" || sortBy === "createdAt") {
-        valA = new Date(valA).getTime();
-        valB = new Date(valB).getTime();
-      }
-
-      if (valA < valB) return sortOrder === "asc" ? -1 : 1;
-      if (valA > valB) return sortOrder === "asc" ? 1 : -1;
-      return 0;
-    });
-
-    const totalCount = filtered.length;
     const totalPages = Math.ceil(totalCount / limit);
-    const startIndex = (page - 1) * limit;
-    const paginatedItems = filtered.slice(startIndex, startIndex + limit);
 
     return NextResponse.json({
       success: true,
-      data: paginatedItems,
+      data: sales,
       pagination: {
         page,
         limit,
@@ -105,7 +70,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Sales API GET Error:", error);
+    console.error("[/api/sales] GET Error:", error);
     return NextResponse.json(
       { success: false, error: "Failed to fetch sales" },
       { status: 500 }
@@ -116,19 +81,24 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    const userId = (session?.user as { id?: string })?.id || "admin-user-001";
+    const userId = (session?.user as { id?: string })?.id;
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const body = await req.json();
     const { amount, category, customerName, orderRef, notes, soldAt } = body;
 
-    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount) || numAmount <= 0) {
       return NextResponse.json(
-        { success: false, error: "Valid amount is required" },
+        { success: false, error: "A valid positive sale amount is required" },
         { status: 400 }
       );
     }
 
-    if (!category) {
+    if (!category || typeof category !== "string" || !category.trim()) {
       return NextResponse.json(
         { success: false, error: "Category is required" },
         { status: 400 }
@@ -137,45 +107,28 @@ export async function POST(req: NextRequest) {
 
     const saleDate = soldAt ? new Date(soldAt) : new Date();
 
-    let createdSale;
-
-    try {
-      createdSale = await prisma.sale.create({
-        data: {
-          userId,
-          amount: parseFloat(Number(amount).toFixed(2)),
-          currency: "USD",
-          category,
-          customerName: customerName || "Anonymous Customer",
-          orderRef: orderRef || `ORD-${Date.now().toString().slice(-6)}`,
-          notes: notes || null,
-          soldAt: saleDate,
-        },
-      });
-    } catch {
-      // Fallback to store
-      createdSale = addSaleToStore({
+    const createdSale = await prisma.sale.create({
+      data: {
         userId,
-        amount: parseFloat(Number(amount).toFixed(2)),
+        amount: parseFloat(numAmount.toFixed(2)),
         currency: "USD",
-        category,
-        customerName: customerName || "Anonymous Customer",
-        orderRef: orderRef || `ORD-${Date.now().toString().slice(-6)}`,
-        notes: notes || null,
+        category: category.trim(),
+        customerName: customerName ? customerName.trim() : null,
+        orderRef: orderRef ? orderRef.trim() : `ORD-${Date.now().toString().slice(-6)}`,
+        notes: notes ? notes.trim() : null,
         soldAt: saleDate,
-      });
-    }
+      },
+    });
 
     return NextResponse.json({
       success: true,
       data: createdSale,
     });
   } catch (error) {
-    console.error("Sales API POST Error:", error);
+    console.error("[/api/sales] POST Error:", error);
     return NextResponse.json(
-      { success: false, error: "Failed to create sale" },
+      { success: false, error: "Failed to record sale in database" },
       { status: 500 }
     );
   }
 }
-
