@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Activity,
   Sparkles,
+  Brain,
 } from "lucide-react";
 import { ClaudeMark } from "@/components/ui/claude-mark";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,7 @@ interface SidebarProps {
 
 const navItems = [
   { id: "overview", label: "Dashboard Overview", icon: LayoutDashboard },
+  { id: "ai", label: "AI Intelligence", icon: Brain },
   { id: "velocity", label: "Weekly Sales Velocity", icon: Activity },
   { id: "trends", label: "WoW Revenue Trends", icon: TrendingUp },
   { id: "transactions", label: "Sales Log & Table", icon: Receipt },
@@ -40,6 +42,16 @@ export function Sidebar({
   mobileOpen,
   onCloseMobile,
 }: SidebarProps) {
+  const handleNavClick = (id: string) => {
+    onSelectTab(id);
+    onCloseMobile();
+    // Smooth scroll to section
+    const el = document.getElementById(`section-${id}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
   return (
     <>
       {/* Mobile backdrop */}
@@ -50,16 +62,17 @@ export function Sidebar({
         />
       )}
 
-      {/* Sidebar container */}
+      {/* Sidebar container — sticky on desktop, fixed slide-in on mobile */}
       <aside
         className={cn(
-          "fixed top-0 bottom-0 left-0 z-50 flex flex-col border-r border-hairline bg-surface-soft transition-all duration-300 md:static md:z-30",
-          mobileOpen ? "translate-x-0 w-64" : "-translate-x-full md:translate-x-0",
+          "fixed top-0 left-0 z-50 flex flex-col border-r border-hairline bg-surface-soft transition-all duration-300",
+          "md:sticky md:top-0 md:z-30 md:h-screen md:self-start md:overflow-y-auto",
+          mobileOpen ? "translate-x-0 w-64 h-full" : "-translate-x-full md:translate-x-0",
           isCollapsed ? "md:w-20" : "md:w-64"
         )}
       >
         {/* Brand / Logo Section */}
-        <div className="flex h-16 items-center justify-between border-b border-hairline px-4 bg-canvas/60">
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-hairline px-4 bg-canvas/60">
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-canvas border border-hairline shadow-subtle">
               <ClaudeMark className="h-5 w-5 text-primary" />
@@ -90,7 +103,7 @@ export function Sidebar({
         </div>
 
         {/* Navigation list */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
           {!isCollapsed && (
             <p className="px-3 pb-2 text-[10px] font-medium uppercase tracking-wider text-muted-soft">
               Analytics & Tracking
@@ -103,10 +116,7 @@ export function Sidebar({
             return (
               <button
                 key={item.id}
-                onClick={() => {
-                  onSelectTab(item.id);
-                  onCloseMobile();
-                }}
+                onClick={() => handleNavClick(item.id)}
                 className={cn(
                   "group flex w-full items-center gap-3 rounded-md px-3 py-2 text-xs font-medium transition-all",
                   isActive
@@ -124,13 +134,16 @@ export function Sidebar({
                 {!isCollapsed && (
                   <span className="truncate text-left">{item.label}</span>
                 )}
+                {isActive && !isCollapsed && (
+                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                )}
               </button>
             );
           })}
-        </div>
+        </nav>
 
         {/* Bottom system status indicator */}
-        <div className="border-t border-hairline p-3 bg-canvas/40">
+        <div className="shrink-0 border-t border-hairline p-3 bg-canvas/40">
           <div
             className={cn(
               "flex items-center gap-2.5 rounded-md border border-hairline bg-surface-card p-2.5 shadow-subtle",
