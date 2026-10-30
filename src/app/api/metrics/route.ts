@@ -37,7 +37,10 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      data: metrics,
+      data: {
+        ...metrics,
+        totalTransactions: sales.length,
+      },
     });
   } catch (error) {
     console.error("Metrics API Error:", error);

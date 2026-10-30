@@ -1,30 +1,35 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { ClaudeMark } from "@/components/ui/claude-mark";
 import { formatCurrency } from "@/lib/utils";
+import { KPISummary } from "@/lib/analytics";
 import { Sparkles, MessageSquare, BarChart3 } from "lucide-react";
 
 interface HeroBandProps {
   revenue: number;
   changePct: number;
   onOpenChat: () => void;
+  kpis?: KPISummary | null;
+  totalTransactions?: number;
 }
 
-function useCountUp(target: number, duration = 1200) {
+function useCountUp(target: number, duration = 1000) {
   const [value, setValue] = useState(0);
   const startRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (target === 0) return;
+    if (target === 0) {
+      setValue(0);
+      return;
+    }
     startRef.current = null;
 
     const step = (timestamp: number) => {
       if (!startRef.current) startRef.current = timestamp;
       const elapsed = timestamp - startRef.current;
       const progress = Math.min(elapsed / duration, 1);
-      // Ease out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
       setValue(Math.round(eased * target));
       if (progress < 1) {
@@ -41,35 +46,70 @@ function useCountUp(target: number, duration = 1200) {
   return value;
 }
 
-const INSIGHTS_TICKER = [
-  "Revenue velocity up 12% week-over-week · Thursday is your strongest day",
-  "Average order value trending positive · Upsell opportunities detected",
-  "AI has analyzed 522 transactions across your 90-day history",
-  "Top category driving 34% of total revenue · Consider expanding inventory",
-  "Weekend conversion gap: 3.2× lower than weekday · Untapped potential",
-];
-
-export function HeroBand({ revenue, changePct, onOpenChat }: HeroBandProps) {
+export function HeroBand({
+  revenue,
+  changePct,
+  onOpenChat,
+  kpis,
+  totalTransactions = 0,
+}: HeroBandProps) {
   const animatedRevenue = useCountUp(revenue);
   const isUp = changePct >= 0;
   const [tickerIdx, setTickerIdx] = useState(0);
   const [tickerVisible, setTickerVisible] = useState(true);
 
-  // Cycle ticker
+  // Dynamically compute real live feed items from actual database metrics
+  const tickerItems = useMemo(() => {
+    const items: string[] = [];
+
+    // 1. Exact week-over-week velocity status
+    if (kpis) {
+      const prevRev = kpis.previousWeekRevenue;
+      items.push(
+        `Revenue ${isUp ? "accelerated +" : "contracted "}${Math.abs(changePct).toFixed(1)}% week-over-week ($${Math.round(revenue).toLocaleString()} vs $${Math.round(prevRev).toLocaleString()})`
+      );
+      items.push(
+        `Average Order Value at $${kpis.currentWeekAOV.toFixed(2)} (${kpis.aovChangePct >= 0 ? "+" : ""}${kpis.aovChangePct.toFixed(1)}% WoW) across ${kpis.currentWeekUnits} orders placed`
+      );
+      items.push(
+        `Month-to-date revenue at $${Math.round(kpis.monthRevenueSoFar).toLocaleString()} · Run rate pacing toward $${Math.round(kpis.projectedMonthRunRate).toLocaleString()}`
+      );
+    } else {
+      items.push(
+        `Revenue velocity tracking at ${isUp ? "+" : ""}${changePct.toFixed(1)}% week-over-week`
+      );
+    }
+
+    // 2. Transaction ledger verification
+    if (totalTransactions > 0) {
+      items.push(
+        `AI Intelligence actively evaluating ${totalTransactions.toLocaleString()} transactions recorded in Neon PostgreSQL`
+      );
+    } else {
+      items.push(
+        "Executive AI Intelligence engine actively calculating live ledger statistics"
+      );
+    }
+
+    return items;
+  }, [revenue, changePct, isUp, kpis, totalTransactions]);
+
+  // Cycle ticker every 5 seconds
   useEffect(() => {
+    if (tickerItems.length <= 1) return;
     const interval = setInterval(() => {
       setTickerVisible(false);
       setTimeout(() => {
-        setTickerIdx((prev) => (prev + 1) % INSIGHTS_TICKER.length);
+        setTickerIdx((prev) => (prev + 1) % tickerItems.length);
         setTickerVisible(true);
       }, 400);
-    }, 5000);
+    }, 5500);
     return () => clearInterval(interval);
-  }, []);
+  }, [tickerItems]);
 
   return (
     <div className="relative overflow-hidden rounded-2xl bg-[#181715] border border-[#252320]">
-      {/* Radial coral gradient mesh background */}
+      {/* Radial gradient background */}
       <div
         className="absolute inset-0 opacity-30"
         style={{
@@ -139,9 +179,9 @@ export function HeroBand({ revenue, changePct, onOpenChat }: HeroBandProps) {
           </div>
 
           {/* Right: Action panel */}
-          <div className="flex flex-col gap-3 lg:w-64">
-            {/* AI Ticker */}
-            <div className="rounded-xl bg-[#252320] border border-[#3d3d3a] p-4 min-h-[80px] flex flex-col justify-between">
+          <div className="flex flex-col gap-3 lg:w-72">
+            {/* AI Ticker with REAL dynamic information */}
+            <div className="rounded-xl bg-[#252320] border border-[#3d3d3a] p-4 min-h-[90px] flex flex-col justify-between">
               <div className="flex items-center gap-2 mb-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#5db872] animate-pulse" />
                 <span className="text-[9px] font-mono uppercase tracking-[0.15em] text-[#5db872]">
@@ -149,17 +189,17 @@ export function HeroBand({ revenue, changePct, onOpenChat }: HeroBandProps) {
                 </span>
               </div>
               <p
-                className="text-xs text-[#a09d96] leading-relaxed transition-opacity duration-400"
+                className="text-xs text-[#a09d96] leading-relaxed transition-opacity duration-300"
                 style={{ opacity: tickerVisible ? 1 : 0 }}
               >
-                {INSIGHTS_TICKER[tickerIdx]}
+                {tickerItems[tickerIdx] || tickerItems[0]}
               </p>
             </div>
 
-            {/* CTA buttons */}
+            {/* CTA button */}
             <button
               onClick={onOpenChat}
-              className="flex items-center justify-between gap-2 rounded-xl bg-[#cc785c] hover:bg-[#a9583e] text-white px-4 py-3.5 transition-colors group"
+              className="flex items-center justify-between gap-2 rounded-xl bg-[#cc785c] hover:bg-[#a9583e] text-white px-4 py-3.5 transition-colors group shadow-sm"
             >
               <div className="flex items-center gap-2.5">
                 <MessageSquare className="h-4 w-4" />
@@ -168,10 +208,13 @@ export function HeroBand({ revenue, changePct, onOpenChat }: HeroBandProps) {
               <Sparkles className="h-3.5 w-3.5 opacity-70 group-hover:opacity-100 transition-opacity" />
             </button>
 
+            {/* Real data counts */}
             <div className="flex gap-2">
               <div className="flex-1 rounded-lg border border-[#3d3d3a] bg-[#252320] px-3 py-2.5 text-center">
-                <p className="text-[10px] font-mono text-[#6c6a64] mb-0.5">Data Points</p>
-                <p className="text-sm font-serif text-[#faf9f5]">522+</p>
+                <p className="text-[10px] font-mono text-[#6c6a64] mb-0.5">Transactions</p>
+                <p className="text-sm font-serif text-[#faf9f5]">
+                  {totalTransactions > 0 ? totalTransactions.toLocaleString() : "Syncing..."}
+                </p>
               </div>
               <div className="flex-1 rounded-lg border border-[#3d3d3a] bg-[#252320] px-3 py-2.5 text-center">
                 <p className="text-[10px] font-mono text-[#6c6a64] mb-0.5">AI Insights</p>
@@ -204,4 +247,3 @@ export function HeroBand({ revenue, changePct, onOpenChat }: HeroBandProps) {
     </div>
   );
 }
-

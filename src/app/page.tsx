@@ -41,6 +41,7 @@ export default function DashboardPage() {
   const [dailyVelocity, setDailyVelocity] = useState<DailyVelocityPoint[]>([]);
   const [weeklyBreakdown, setWeeklyBreakdown] = useState<WeeklyBarPoint[]>([]);
   const [velocityGauge, setVelocityGauge] = useState<VelocityGaugeData | null>(null);
+  const [totalTransactions, setTotalTransactions] = useState<number>(0);
 
   const [isNewSaleOpen, setIsNewSaleOpen] = useState(false);
   const [isCsvUploadOpen, setIsCsvUploadOpen] = useState(false);
@@ -56,6 +57,7 @@ export default function DashboardPage() {
         setDailyVelocity(json.data.dailyVelocity);
         setWeeklyBreakdown(json.data.weeklyBreakdown);
         setVelocityGauge(json.data.velocityGauge);
+        setTotalTransactions(json.data.totalTransactions || 0);
       }
     } catch (err) {
       console.error("Failed to load dashboard metrics:", err);
@@ -102,6 +104,8 @@ export default function DashboardPage() {
               revenue={kpis?.currentWeekRevenue ?? 0}
               changePct={kpis?.revenueChangePct ?? 0}
               onOpenChat={() => setIsChatOpen(true)}
+              kpis={kpis}
+              totalTransactions={totalTransactions}
             />
           </section>
 
