@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { TrendingUp, TrendingDown, Minus, Sparkles, BarChart2 } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
-import { ClaudeMark } from "@/components/ui/claude-mark";
 
 interface ForecastWeek {
   week: string;
@@ -35,9 +34,7 @@ export function AIForecastPanel({ className = "" }: { className?: string }) {
         return r.json();
       })
       .then((res) => {
-        if (res) {
-          setData(res);
-        }
+        if (res) setData(res);
       })
       .catch((err) => {
         console.warn("Forecast fetch warning:", err);
@@ -56,10 +53,10 @@ export function AIForecastPanel({ className = "" }: { className?: string }) {
 
   const trendColor =
     data?.trendDirection === "up"
-      ? "#5db872"
+      ? "text-[#16a34a]"
       : data?.trendDirection === "down"
-      ? "#c64545"
-      : "#a09d96";
+      ? "text-[#dc2626]"
+      : "text-[#7b7266]";
 
   const chartData = hasData
     ? [
@@ -71,8 +68,6 @@ export function AIForecastPanel({ className = "" }: { className?: string }) {
         ...(data.forecasts?.map((f, i) => ({
           label: `W+${i + 1}`,
           revenue: f.projected,
-          low: f.low,
-          high: f.high,
           type: "forecast",
         })) ?? []),
       ]
@@ -80,88 +75,79 @@ export function AIForecastPanel({ className = "" }: { className?: string }) {
 
   return (
     <div
-      className={`rounded-xl border border-[#e6dfd8] bg-[#faf9f5] overflow-hidden ${className}`}
+      className={`rounded-xl border border-[#e5e1d8] bg-white overflow-hidden flex flex-col ${className}`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-[#e6dfd8]">
-        <div className="flex items-center gap-3">
-          <Sparkles className="h-4 w-4 text-[#cc785c]" />
-          <div>
-            <p className="text-[10px] font-mono uppercase tracking-widest text-[#8e8b82]">
-              AI Revenue Forecast
-            </p>
-            <h3 className="font-serif text-base font-normal text-[#141413] leading-tight">
-              4-Week Forward Projection
-            </h3>
-          </div>
+      <div className="flex items-center justify-between px-5 py-4 border-b border-[#f0ede6]">
+        <div>
+          <p className="text-[11px] font-medium text-[#7b7266]">
+            Predictive modeling
+          </p>
+          <h3 className="font-serif text-lg font-normal text-[#1f1b16]">
+            4-week forward projection
+          </h3>
         </div>
         {hasData && (
-          <div
-            className="flex items-center gap-1.5 text-sm font-medium"
-            style={{ color: trendColor }}
-          >
-            <TrendIcon className="h-4 w-4" />
-            <span className="font-mono text-xs">
-              {data.slope > 0 ? "+" : ""}
-              {formatCurrency(data.slope)} / wk
-            </span>
+          <div className={`flex items-center gap-1 text-xs font-mono font-medium ${trendColor}`}>
+            <TrendIcon className="h-3.5 w-3.5" />
+            <span>{data.trendDirection.toUpperCase()}</span>
           </div>
         )}
       </div>
 
-      <div className="p-5 space-y-5">
+      <div className="p-5 flex-1 flex flex-col justify-between">
         {loading ? (
-          <div className="space-y-3">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-12 bg-[#efe9de] rounded-lg animate-pulse" />
-            ))}
+          <div className="h-44 flex items-center justify-center">
+            <div className="h-4 w-32 bg-[#efe9df] rounded animate-pulse" />
           </div>
         ) : !hasData ? (
-          <div className="py-10 text-center flex flex-col items-center justify-center space-y-3">
-            <div className="w-10 h-10 rounded-full bg-[#efe9de] flex items-center justify-center text-[#8e8b82]">
-              <BarChart2 className="h-5 w-5" />
-            </div>
-            <p className="text-sm font-medium text-[#141413]">Awaiting Transaction History</p>
-            <p className="text-xs text-[#8e8b82] max-w-xs leading-relaxed">
-              Import historical sales data to project your upcoming 4-week revenue trend and confidence intervals.
+          <div className="py-12 text-center space-y-1">
+            <p className="text-xs text-[#5e554a]">Awaiting transaction history</p>
+            <p className="text-[11px] text-[#7b7266]">
+              Import 2 or more weeks of sales to compute forward pacing.
             </p>
           </div>
         ) : (
           <>
-            {/* Chart */}
-            <div className="h-40">
+            <div className="h-36 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} barSize={20}>
+                <BarChart data={chartData} margin={{ top: 8, right: 0, left: -24, bottom: 0 }}>
                   <XAxis
                     dataKey="label"
-                    tick={{ fontSize: 10, fill: "#8e8b82", fontFamily: "JetBrains Mono" }}
-                    axisLine={false}
+                    stroke="#7b7266"
+                    fontSize={10}
                     tickLine={false}
+                    axisLine={false}
+                    fontFamily="monospace"
                   />
-                  <YAxis hide />
+                  <YAxis
+                    stroke="#7b7266"
+                    fontSize={10}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                    fontFamily="monospace"
+                  />
                   <Tooltip
-                    contentStyle={{
-                      background: "#181715",
-                      border: "1px solid #252320",
-                      borderRadius: "8px",
-                      fontSize: "11px",
-                      color: "#faf9f5",
-                      fontFamily: "Inter",
+                    cursor={{ fill: "rgba(0,0,0,0.02)" }}
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const d = payload[0].payload;
+                        return (
+                          <div className="rounded-md border border-[#e5e1d8] bg-white p-2 shadow-xs text-xs font-mono">
+                            <p className="text-[#7b7266]">{d.label} · {d.type}</p>
+                            <p className="font-medium text-[#1f1b16]">{formatCurrency(d.revenue)}</p>
+                          </div>
+                        );
+                      }
+                      return null;
                     }}
-                    formatter={(val: number) => [formatCurrency(val), "Revenue"]}
-                    labelStyle={{ color: "#a09d96" }}
                   />
                   <Bar dataKey="revenue" radius={[3, 3, 0, 0]}>
-                    {chartData.map((entry, i) => (
+                    {chartData.map((entry, index) => (
                       <Cell
-                        key={i}
-                        fill={
-                          entry.type === "historical"
-                            ? "#e6dfd8"
-                            : i === chartData.length - 1
-                            ? "#cc785c"
-                            : "#cc785c80"
-                        }
+                        key={`cell-${index}`}
+                        fill={entry.type === "forecast" ? "#c26a50" : "#d8d3c8"}
                       />
                     ))}
                   </Bar>
@@ -169,53 +155,14 @@ export function AIForecastPanel({ className = "" }: { className?: string }) {
               </ResponsiveContainer>
             </div>
 
-            {/* Forecast rows */}
-            <div className="space-y-2">
-              {data?.forecasts?.map((f, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between py-2.5 px-3 rounded-lg bg-[#f5f0e8] border border-[#e6dfd8]"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-mono text-[#8e8b82] w-8">
-                      W+{i + 1}
-                    </span>
-                    <span className="text-xs text-[#6c6a64]">{f.week}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-mono text-[#8e8b82]">
-                      {formatCurrency(f.low)} – {formatCurrency(f.high)}
-                    </span>
-                    <span className="font-serif text-sm font-normal text-[#cc785c]">
-                      {formatCurrency(f.projected)}
-                    </span>
-                    <div className="w-12 h-1.5 bg-[#e6dfd8] rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-[#cc785c] rounded-full"
-                        style={{ width: `${f.confidence * 100}%` }}
-                      />
-                    </div>
-                    <span className="text-[9px] font-mono text-[#8e8b82]">
-                      {Math.round(f.confidence * 100)}%
-                    </span>
-                  </div>
-                </div>
-              ))}
+            <div className="flex items-center justify-between pt-3 border-t border-[#f0ede6] text-[11px] font-mono text-[#7b7266]">
+              <span className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-xs bg-[#d8d3c8]" /> Historical
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-xs bg-[#c26a50]" /> Projected
+              </span>
             </div>
-
-            {/* AI Commentary */}
-            {data?.commentary && (
-              <div className="flex gap-3 p-3.5 rounded-lg bg-[#cc785c]/8 border border-[#cc785c]/20">
-                <ClaudeMark className="h-4 w-4 text-[#cc785c] flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-[#3d3d3a] leading-relaxed italic">
-                  {data.commentary}
-                </p>
-              </div>
-            )}
-
-            <p className="text-[10px] font-mono text-[#8e8b82] text-center">
-              Predictive linear regression model · 95% dynamic confidence interval
-            </p>
           </>
         )}
       </div>

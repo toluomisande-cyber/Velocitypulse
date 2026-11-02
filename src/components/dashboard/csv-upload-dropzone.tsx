@@ -3,7 +3,6 @@
 import React, { useState, useRef } from "react";
 import Papa from "papaparse";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { ClaudeMark } from "@/components/ui/claude-mark";
 import {
@@ -13,7 +12,6 @@ import {
   CheckCircle2,
   AlertTriangle,
   Download,
-  ArrowRight,
   RefreshCw,
 } from "lucide-react";
 
@@ -96,7 +94,7 @@ export function CsvUploadDropzone({ isOpen, onClose, onSuccess }: CsvUploadDropz
           rows.push({
             amount: amt,
             category: rawRow.Category || rawRow.category || "Enterprise Plan",
-            customerName: rawRow.Customer || rawRow.customer || rawRow.customerName || "CSV Customer",
+            customerName: rawRow.Customer || rawRow.customer || rawRow.customerName || "Direct Sale",
             orderRef: rawRow.OrderRef || rawRow.orderRef || `CSV-${idx + 1}`,
             soldAt: rawRow.Date || rawRow.date || rawRow.soldAt || new Date().toISOString(),
             notes: rawRow.Notes || rawRow.notes || "Bulk import",
@@ -132,7 +130,7 @@ export function CsvUploadDropzone({ isOpen, onClose, onSuccess }: CsvUploadDropz
       setTimeout(() => {
         onSuccess();
         onClose();
-      }, 1500);
+      }, 1200);
     } catch (err: any) {
       setParseErrors([err.message || "Failed to commit upload."]);
     } finally {
@@ -153,21 +151,21 @@ export function CsvUploadDropzone({ isOpen, onClose, onSuccess }: CsvUploadDropz
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-ink/40 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-[#191816]/40 backdrop-blur-sm transition-opacity"
       />
 
       {/* Modal Dialog Card */}
-      <div className="relative z-10 w-full max-w-2xl rounded-lg border border-hairline bg-canvas p-7 shadow-card max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between border-b border-hairline pb-4 mb-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-surface-card border border-hairline text-primary">
-              <ClaudeMark className="h-5 w-5" />
+      <div className="relative z-10 w-full max-w-xl rounded-xl border border-[#e5e1d8] bg-white p-6 shadow-xl max-h-[88vh] flex flex-col">
+        <div className="flex items-center justify-between border-b border-[#f0ede6] pb-3.5 mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[#faf9f5] border border-[#e5e1d8]">
+              <ClaudeMark className="h-4 w-4 text-[#c26a50]" />
             </div>
             <div>
-              <h3 className="font-serif text-xl font-normal text-ink">
-                Bulk CSV Transaction Ingestion
+              <h3 className="font-serif text-lg font-normal text-[#191816]">
+                CSV batch ingestion
               </h3>
-              <p className="text-xs text-muted">
+              <p className="text-[11px] text-[#7b7266]">
                 Import sales history to calculate weekly velocity & revenue analytics
               </p>
             </div>
@@ -175,31 +173,31 @@ export function CsvUploadDropzone({ isOpen, onClose, onSuccess }: CsvUploadDropz
 
           <button
             onClick={onClose}
-            className="rounded-md p-1.5 text-muted hover:bg-surface-soft hover:text-ink transition-colors"
+            className="rounded-md p-1.5 text-[#7b7266] hover:bg-[#faf9f5] hover:text-[#191816] transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {uploadSuccessMessage ? (
-          <div className="py-12 text-center space-y-3">
-            <CheckCircle2 className="h-12 w-12 text-emerald-600 mx-auto animate-bounce" />
-            <h4 className="font-serif text-2xl font-normal text-ink">Import Complete</h4>
-            <p className="text-xs text-muted">{uploadSuccessMessage}</p>
-            <p className="text-[11px] text-primary">Updating dashboard metrics...</p>
+          <div className="py-12 text-center space-y-2">
+            <CheckCircle2 className="h-10 w-10 text-[#16a34a] mx-auto" />
+            <h4 className="font-serif text-xl font-normal text-[#191816]">Import complete</h4>
+            <p className="text-xs text-[#5e554a]">{uploadSuccessMessage}</p>
+            <p className="text-[11px] font-mono text-[#c26a50]">Refreshing dashboard metrics…</p>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto space-y-4 pr-1">
-            {/* Template download helper pill */}
-            <div className="flex items-center justify-between rounded-md border border-hairline bg-surface-soft p-3 text-xs">
-              <span className="text-muted">Need the standard column schema?</span>
+          <div className="flex-1 overflow-y-auto space-y-3.5 pr-1 text-xs">
+            {/* Template link */}
+            <div className="flex items-center justify-between rounded-lg border border-[#e5e1d8] bg-[#faf9f5] p-2.5">
+              <span className="text-[#5e554a]">Standard schema: Amount, Category, Customer, OrderRef, Date, Notes</span>
               <a
                 href="/sample_sales_template.csv"
                 download="sample_sales_template.csv"
-                className="inline-flex items-center gap-1.5 font-medium text-primary hover:underline"
+                className="inline-flex items-center gap-1 font-medium text-[#c26a50] hover:underline"
               >
-                <Download className="h-3.5 w-3.5" />
-                Download Sample CSV
+                <Download className="h-3 w-3" />
+                Template ↓
               </a>
             </div>
 
@@ -210,10 +208,10 @@ export function CsvUploadDropzone({ isOpen, onClose, onSuccess }: CsvUploadDropz
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className={`flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 text-center cursor-pointer transition-all ${
+                className={`flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 text-center cursor-pointer transition-colors ${
                   isDragging
-                    ? "border-primary bg-primary/5"
-                    : "border-hairline bg-surface-card/40 hover:border-primary/50 hover:bg-surface-card"
+                    ? "border-[#c26a50] bg-[#c26a50]/5"
+                    : "border-[#e5e1d8] bg-[#faf9f5] hover:border-[#c26a50]/60"
                 }`}
               >
                 <input
@@ -223,77 +221,74 @@ export function CsvUploadDropzone({ isOpen, onClose, onSuccess }: CsvUploadDropz
                   onChange={handleFileChange}
                   className="hidden"
                 />
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-soft border border-hairline text-ink mb-3 shadow-subtle">
-                  <UploadCloud className="h-6 w-6 text-primary" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white border border-[#e5e1d8] mb-2.5">
+                  <UploadCloud className="h-5 w-5 text-[#c26a50]" />
                 </div>
-                <p className="font-serif text-lg font-normal text-ink">
-                  Drop your CSV file here or click to browse
+                <p className="font-serif text-base font-normal text-[#191816]">
+                  Drop sales CSV file here or click to browse
                 </p>
-                <p className="text-xs text-muted mt-1 font-sans">
-                  Supported columns: Amount, Category, Customer, OrderRef, Date, Notes
+                <p className="text-[11px] text-[#7b7266] mt-0.5 font-mono">
+                  Rows will be validated and stamped to your account
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between rounded-md border border-hairline bg-surface-card p-3 text-xs">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between rounded-lg border border-[#e5e1d8] bg-[#faf9f5] p-2.5">
                   <div className="flex items-center gap-2">
-                    <FileSpreadsheet className="h-4 w-4 text-primary" />
-                    <span className="font-medium text-ink">{file.name}</span>
-                    <Badge variant="secondary" className="font-mono text-[10px]">
-                      {previewRows.length} valid rows
-                    </Badge>
+                    <FileSpreadsheet className="h-4 w-4 text-[#c26a50]" />
+                    <span className="font-medium text-[#191816] truncate max-w-[200px] sm:max-w-xs">{file.name}</span>
+                    <span className="font-mono text-[10px] text-[#7b7266]">
+                      ({previewRows.length} rows)
+                    </span>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={reset}
-                    className="h-7 text-xs text-muted hover:text-ink"
+                    className="h-7 text-xs text-[#7b7266] hover:text-[#191816]"
                   >
-                    Change File
+                    Change
                   </Button>
                 </div>
 
-                {/* Warnings */}
                 {parseErrors.length > 0 && (
-                  <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 space-y-1">
-                    <div className="flex items-center gap-1.5 font-semibold">
+                  <div className="rounded-lg border border-[#dc2626]/20 bg-[#dc2626]/5 p-2.5 text-xs text-[#dc2626] space-y-1">
+                    <div className="flex items-center gap-1.5 font-medium">
                       <AlertTriangle className="h-3.5 w-3.5" />
-                      Parsing Warnings ({parseErrors.length})
+                      Parsing warnings ({parseErrors.length})
                     </div>
-                    {parseErrors.slice(0, 3).map((err, i) => (
-                      <p key={i} className="text-[11px] text-amber-900/90 pl-5">
-                        • {err}
-                      </p>
+                    {parseErrors.slice(0, 2).map((err, i) => (
+                      <p key={i} className="text-[11px] pl-4">• {err}</p>
                     ))}
                   </div>
                 )}
 
                 {/* Preview Table */}
                 <div>
-                  <div className="flex items-center justify-between pb-2 text-xs text-muted">
-                    <span>Parsed Preview (First 5 rows):</span>
-                    <span className="font-mono text-ink font-medium">
-                      Total: {formatCurrency(previewRows.reduce((s, r) => s + r.amount, 0))}
+                  <div className="flex items-center justify-between pb-1.5 text-[11px] text-[#7b7266]">
+                    <span>Sample parsed rows:</span>
+                    <span className="font-mono text-[#191816]">
+                      Sum: {formatCurrency(previewRows.reduce((s, r) => s + r.amount, 0))}
                     </span>
                   </div>
 
-                  <div className="max-h-48 overflow-x-auto overflow-y-auto rounded-md border border-hairline">
+                  <div className="max-h-40 overflow-y-auto rounded-lg border border-[#e5e1d8]">
                     <table className="w-full text-left text-[11px]">
-                      <thead className="bg-surface-soft text-body-strong font-mono border-b border-hairline">
+                      <thead className="bg-[#faf9f5] text-[#5e554a] border-b border-[#e5e1d8] font-mono">
                         <tr>
-                          <th className="p-2">Order Ref</th>
+                          <th className="p-2">Order ref</th>
                           <th className="p-2">Customer</th>
                           <th className="p-2">Category</th>
                           <th className="p-2 text-right">Amount</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-hairline">
+                      <tbody className="divide-y divide-[#f0ede6]">
                         {previewRows.slice(0, 5).map((row, idx) => (
-                          <tr key={idx} className="hover:bg-surface-soft/60 text-body">
-                            <td className="p-2 font-mono text-muted">{row.orderRef}</td>
-                            <td className="p-2 font-medium text-ink">{row.customerName}</td>
+                          <tr key={idx} className="hover:bg-[#faf9f5] text-[#191816]">
+                            <td className="p-2 font-mono text-[#7b7266]">{row.orderRef}</td>
+                            <td className="p-2">{row.customerName}</td>
                             <td className="p-2">{row.category}</td>
-                            <td className="p-2 text-right font-mono font-medium text-primary">
+                            <td className="p-2 text-right font-mono text-[#191816] tabular-nums">
                               {formatCurrency(row.amount)}
                             </td>
                           </tr>
@@ -308,12 +303,14 @@ export function CsvUploadDropzone({ isOpen, onClose, onSuccess }: CsvUploadDropz
         )}
 
         {!uploadSuccessMessage && (
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-hairline mt-4">
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#f0ede6] mt-3">
             <Button
               type="button"
               variant="outline"
+              size="sm"
               onClick={onClose}
               disabled={isUploading}
+              className="h-8 text-xs border-[#e5e1d8] bg-white text-[#5e554a]"
             >
               Cancel
             </Button>
@@ -322,18 +319,15 @@ export function CsvUploadDropzone({ isOpen, onClose, onSuccess }: CsvUploadDropz
               type="button"
               onClick={handleCommitUpload}
               disabled={!file || previewRows.length === 0 || isUploading}
-              className="bg-primary hover:bg-primary-active text-on-primary font-medium"
+              className="h-8 text-xs font-medium bg-[#c26a50] hover:bg-[#a85840] text-white"
             >
               {isUploading ? (
                 <>
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin mr-1.5" />
-                  Importing...
+                  <RefreshCw className="h-3 w-3 animate-spin mr-1.5" />
+                  Importing…
                 </>
               ) : (
-                <>
-                  Import {previewRows.length} Rows
-                  <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
-                </>
+                `Import ${previewRows.length} rows`
               )}
             </Button>
           </div>

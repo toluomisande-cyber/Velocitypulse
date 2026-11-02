@@ -1,11 +1,9 @@
 "use client";
 
 import React from "react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { VelocityGaugeData } from "@/lib/analytics";
 import { formatCurrency, formatPercentage } from "@/lib/utils";
-import { Gauge, TrendingUp, TrendingDown, Info } from "lucide-react";
+import { Gauge, ArrowUpRight, ArrowDownRight } from "lucide-react";
 
 interface VelocityGaugeProps {
   data: VelocityGaugeData | null;
@@ -17,7 +15,6 @@ export function VelocityGauge({ data }: VelocityGaugeProps) {
   const {
     velocityPct,
     status,
-    summaryText,
     currentWeekRevenue,
     previousWeekRevenue,
     deltaRevenue,
@@ -26,176 +23,110 @@ export function VelocityGauge({ data }: VelocityGaugeProps) {
   const hasPreviousRevenue = previousWeekRevenue > 0;
   const isZeroState = currentWeekRevenue === 0 && previousWeekRevenue === 0;
 
-  // Gauge angle calculation: map -50% to +50% range to 0deg to 180deg
+  // Clamped progress: -50% to +50% range to 0 to 100
   const clampedPct = Math.max(-50, Math.min(50, velocityPct));
   const normalized = (clampedPct + 50) / 100;
   const needleAngle = isZeroState ? 90 : normalized * 180;
-
   const isPositive = velocityPct >= 0;
 
   return (
-    <Card variant="card" className="border-hairline bg-surface-card shadow-subtle">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
+    <div className="rounded-xl border border-[#e5e1d8] bg-white p-5 flex flex-col justify-between">
+      {/* Header */}
+      <div>
+        <div className="flex items-center justify-between pb-3 border-b border-[#f0ede6]">
           <div className="flex items-center gap-2">
-            <CardTitle className="font-serif text-xl font-normal flex items-center gap-2 text-ink">
-              <Gauge className="h-4 w-4 text-primary" />
-              Growth Velocity Gauge
-            </CardTitle>
+            <Gauge className="h-4 w-4 text-[#c26a50]" />
+            <h3 className="font-serif text-lg font-normal text-[#1f1b16]">
+              Growth pace
+            </h3>
           </div>
-          <Badge
-            variant={
+          <span
+            className={`text-[10px] font-mono px-2 py-0.5 rounded ${
               isZeroState
-                ? "secondary"
-                : status === "Hyper-Growth" || status === "High Velocity"
-                ? "coral"
-                : status === "Moderate Growth"
-                ? "teal"
-                : "destructive"
-            }
-            className="text-xs font-semibold px-2.5 py-0.5"
+                ? "bg-[#f0ede6] text-[#7b7266]"
+                : isPositive
+                ? "bg-[#16a34a]/10 text-[#16a34a]"
+                : "bg-[#dc2626]/10 text-[#dc2626]"
+            }`}
           >
-            {isZeroState ? "Awaiting Data" : status}
-          </Badge>
+            {isZeroState ? "Awaiting data" : status}
+          </span>
         </div>
-        <CardDescription>
-          Week-over-Week formula: ((This_Week - Last_Week) / Last_Week) × 100
-        </CardDescription>
-      </CardHeader>
 
-      <CardContent className="pt-2">
-        {/* Speedometer Gauge Visual */}
-        <div className="relative flex flex-col items-center justify-center pt-2">
-          <svg className="w-64 h-36 overflow-visible" viewBox="0 0 200 110">
-            <defs>
-              <linearGradient id="velocityGaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#c64545" />    {/* Error Crimson */}
-                <stop offset="35%" stopColor="#e8a55a" />   {/* Accent Amber */}
-                <stop offset="65%" stopColor="#5db8a6" />   {/* Accent Teal */}
-                <stop offset="100%" stopColor="#cc785c" />  {/* Signature Coral */}
-              </linearGradient>
-            </defs>
-
-            {/* Background Arc Track */}
+        {/* Minimal Arc Gauge */}
+        <div className="relative flex flex-col items-center justify-center pt-4">
+          <svg className="w-56 h-32 overflow-visible" viewBox="0 0 200 110">
+            {/* Background Track */}
             <path
-              d="M 20 100 A 80 80 0 0 1 180 100"
+              d="M 24 100 A 76 76 0 0 1 176 100"
               fill="none"
-              stroke="#e6dfd8"
-              strokeWidth="16"
+              stroke="#f0ede6"
+              strokeWidth="12"
               strokeLinecap="round"
             />
 
-            {/* Gradient Colored Arc */}
-            <path
-              d="M 20 100 A 80 80 0 0 1 180 100"
-              fill="none"
-              stroke={isZeroState ? "#e6dfd8" : "url(#velocityGaugeGradient)"}
-              strokeWidth="14"
-              strokeLinecap="round"
-              strokeOpacity="0.9"
-            />
+            {/* Active Single-Tone Arc */}
+            {!isZeroState && (
+              <path
+                d="M 24 100 A 76 76 0 0 1 176 100"
+                fill="none"
+                stroke={isPositive ? "#c26a50" : "#7b7266"}
+                strokeWidth="12"
+                strokeLinecap="round"
+                strokeDasharray="240"
+                strokeDashoffset={240 * (1 - normalized)}
+                className="transition-all duration-700 ease-out"
+              />
+            )}
 
-            {/* Needle Pivot Indicator */}
-            <g transform={`rotate(${needleAngle - 90}, 100, 100)`}>
+            {/* Needle */}
+            <g transform={`rotate(${needleAngle - 90}, 100, 100)`} className="transition-transform duration-700 ease-out">
               <line
                 x1="100"
                 y1="100"
                 x2="100"
-                y2="30"
-                stroke="#141413"
-                strokeWidth="3.5"
+                y2="34"
+                stroke="#1f1b16"
+                strokeWidth="2"
                 strokeLinecap="round"
               />
-              <circle cx="100" cy="100" r="7" fill="#141413" />
-              <circle cx="100" cy="100" r="3" fill="#faf9f5" />
+              <circle cx="100" cy="100" r="5" fill="#1f1b16" />
             </g>
           </svg>
 
-          {/* Scale Labels */}
-          <div className="flex w-64 justify-between px-2 text-[10px] text-muted font-mono -mt-2">
-            <span>-50%</span>
-            <span>0% (Par)</span>
-            <span>+50%</span>
-          </div>
-
-          {/* Velocity Rate Readout */}
-          <div className="mt-3 text-center">
-            {isZeroState || !hasPreviousRevenue ? (
-              <div className="text-center">
-                <span className="font-serif text-3xl font-normal tracking-tight text-ink">
+          {/* Value Display */}
+          <div className="text-center -mt-4">
+            <div className="flex items-center justify-center gap-1">
+              {hasPreviousRevenue ? (
+                <span
+                  className={`font-serif text-2xl font-normal tracking-tight tabular-nums ${
+                    isPositive ? "text-[#1f1b16]" : "text-[#dc2626]"
+                  }`}
+                >
+                  {isPositive ? "+" : ""}{formatPercentage(velocityPct)}
+                </span>
+              ) : (
+                <span className="font-serif text-2xl font-normal text-[#7b7266]">
                   —
                 </span>
-                <p className="text-xs text-muted mt-0.5 font-sans">
-                  {isZeroState ? "Awaiting Sales Data" : "Baseline Cycle"}
-                </p>
-              </div>
-            ) : (
-              <div>
-                <div className="flex items-center justify-center gap-1.5">
-                  {isPositive ? (
-                    <TrendingUp className="h-6 w-6 text-primary stroke-[2.5]" />
-                  ) : (
-                    <TrendingDown className="h-6 w-6 text-error stroke-[2.5]" />
-                  )}
-                  <span
-                    className={`font-serif text-3xl font-normal tracking-tight ${
-                      isPositive ? "text-primary" : "text-error"
-                    }`}
-                  >
-                    {formatPercentage(velocityPct)}
-                  </span>
-                </div>
-                <p className="text-xs text-muted mt-0.5 font-sans">
-                  Week-over-Week Growth Rate
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Breakdown Card */}
-        <div className="mt-4 rounded-md border border-hairline bg-canvas p-3 text-xs space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-muted">Current Week Revenue:</span>
-            <span className="font-mono font-medium text-ink">
-              {formatCurrency(currentWeekRevenue)}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-muted">Previous Week Baseline:</span>
-            <span className="font-mono text-muted">
-              {hasPreviousRevenue ? formatCurrency(previousWeekRevenue) : "—"}
-            </span>
-          </div>
-          <div className="border-t border-hairline pt-2 flex items-center justify-between">
-            <span className="font-medium text-body">Net Revenue Delta:</span>
-            <span
-              className={`font-mono font-semibold ${
-                deltaRevenue > 0
-                  ? "text-primary"
-                  : deltaRevenue < 0
-                  ? "text-error"
-                  : "text-muted"
-              }`}
-            >
-              {hasPreviousRevenue ? (
-                <>
-                  {deltaRevenue >= 0 ? "+" : ""}
-                  {formatCurrency(deltaRevenue)}
-                </>
-              ) : (
-                "—"
               )}
-            </span>
+            </div>
+            <p className="text-[11px] text-[#7b7266] font-mono mt-0.5">
+              {hasPreviousRevenue ? "week-over-week velocity" : "initial cycle"}
+            </p>
           </div>
         </div>
+      </div>
 
-        <p className="mt-3 text-[11px] leading-relaxed text-muted italic">
-          {isZeroState
-            ? "Upload transactions using the Import CSV tool to measure real-time growth pacing."
-            : summaryText}
-        </p>
-      </CardContent>
-    </Card>
+      {/* Footer Metrics */}
+      <div className="pt-3 border-t border-[#f0ede6] flex items-center justify-between text-xs font-mono text-[#7b7266]">
+        <span>Net delta:</span>
+        <span className="font-medium text-[#1f1b16] tabular-nums">
+          {hasPreviousRevenue
+            ? `${deltaRevenue >= 0 ? "+" : ""}${formatCurrency(deltaRevenue)}`
+            : "—"}
+        </span>
+      </div>
+    </div>
   );
 }

@@ -2,9 +2,8 @@
 
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import { ClaudeMark } from "@/components/ui/claude-mark";
-import { formatCurrency } from "@/lib/utils";
 import { KPISummary } from "@/lib/analytics";
-import { Sparkles, MessageSquare, BarChart3, UploadCloud } from "lucide-react";
+import { MessageSquare, UploadCloud, ArrowUpRight, ArrowDownRight } from "lucide-react";
 
 interface HeroBandProps {
   revenue: number;
@@ -15,7 +14,7 @@ interface HeroBandProps {
   totalTransactions?: number;
 }
 
-function useCountUp(target: number, duration = 1000) {
+function useCountUp(target: number, duration = 800) {
   const [value, setValue] = useState(0);
   const startRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
@@ -31,6 +30,7 @@ function useCountUp(target: number, duration = 1000) {
       if (!startRef.current) startRef.current = timestamp;
       const elapsed = timestamp - startRef.current;
       const progress = Math.min(elapsed / duration, 1);
+      // Gentle cubic ease-out
       const eased = 1 - Math.pow(1 - progress, 3);
       setValue(Math.round(eased * target));
       if (progress < 1) {
@@ -63,13 +63,13 @@ export function HeroBand({
   const hasPreviousRevenue = (kpis?.previousWeekRevenue ?? 0) > 0;
   const isZeroState = totalTransactions === 0;
 
-  // Dynamically compute real live feed items from actual database metrics
+  // Real data-driven signal messages
   const tickerItems = useMemo(() => {
     if (isZeroState) {
       return [
-        "Welcome to VelocityPulse · Import your sales CSV to initialize analytics",
-        "Multi-tenant isolation active · Only your imported data is calculated",
-        "Record transactions manually or drag-and-drop CSV files to begin",
+        "Awaiting sales import — upload a CSV to activate weekly revenue metrics",
+        "Tenant isolation active — only your uploaded transactions are calculated",
+        "Record sales manually or import multiple batches anytime",
       ];
     }
 
@@ -79,33 +79,32 @@ export function HeroBand({
       const prevRev = kpis.previousWeekRevenue;
       if (hasPreviousRevenue) {
         items.push(
-          `Revenue ${isUp ? "accelerated +" : "contracted "}${Math.abs(changePct).toFixed(1)}% week-over-week ($${Math.round(revenue).toLocaleString()} vs $${Math.round(prevRev).toLocaleString()})`
+          `Weekly revenue ${isUp ? "up +" : "down "}${Math.abs(changePct).toFixed(1)}% ($${Math.round(revenue).toLocaleString()} vs $${Math.round(prevRev).toLocaleString()} prior cycle)`
         );
       } else {
         items.push(
-          `Initial weekly revenue recorded at $${Math.round(revenue).toLocaleString()} across ${kpis.currentWeekUnits} transactions`
+          `Initial weekly revenue: $${Math.round(revenue).toLocaleString()} across ${kpis.currentWeekUnits} transactions`
         );
       }
 
       items.push(
-        `Average Order Value at $${kpis.currentWeekAOV.toFixed(2)} (${kpis.aovChangePct >= 0 ? "+" : ""}${kpis.aovChangePct.toFixed(1)}% WoW) across ${kpis.currentWeekUnits} orders placed`
+        `Average order value at $${kpis.currentWeekAOV.toFixed(2)} (${kpis.aovChangePct >= 0 ? "+" : ""}${kpis.aovChangePct.toFixed(1)}% vs prior)`
       );
 
       items.push(
-        `Month-to-date revenue at $${Math.round(kpis.monthRevenueSoFar).toLocaleString()} · Run rate pacing toward $${Math.round(kpis.projectedMonthRunRate).toLocaleString()}`
+        `Month-to-date pace: $${Math.round(kpis.monthRevenueSoFar).toLocaleString()} · Run rate projected at $${Math.round(kpis.projectedMonthRunRate).toLocaleString()}`
       );
     }
 
     if (totalTransactions > 0) {
       items.push(
-        `AI Intelligence actively evaluating ${totalTransactions.toLocaleString()} verified transactions in your ledger`
+        `${totalTransactions.toLocaleString()} transactions recorded in ledger`
       );
     }
 
     return items;
   }, [revenue, changePct, isUp, kpis, totalTransactions, hasPreviousRevenue, isZeroState]);
 
-  // Cycle ticker every 5.5 seconds
   useEffect(() => {
     if (tickerItems.length <= 1) return;
     const interval = setInterval(() => {
@@ -113,51 +112,30 @@ export function HeroBand({
       setTimeout(() => {
         setTickerIdx((prev) => (prev + 1) % tickerItems.length);
         setTickerVisible(true);
-      }, 400);
-    }, 5500);
+      }, 300);
+    }, 6000);
     return () => clearInterval(interval);
   }, [tickerItems]);
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-[#181715] border border-[#252320]">
-      {/* Radial gradient background */}
-      <div
-        className="absolute inset-0 opacity-30"
-        style={{
-          background:
-            "radial-gradient(ellipse 60% 80% at 85% 50%, #cc785c22 0%, transparent 70%), radial-gradient(ellipse 40% 60% at 15% 20%, #5db8a620 0%, transparent 60%)",
-        }}
-      />
-      {/* Fine grid overlay */}
-      <div
-        className="absolute inset-0 opacity-[0.04]"
-        style={{
-          backgroundImage:
-            "linear-gradient(#faf9f5 1px, transparent 1px), linear-gradient(90deg, #faf9f5 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }}
-      />
-
-      <div className="relative z-10 px-8 py-10 md:px-12 md:py-14">
+    <div className="rounded-2xl bg-[#151413] border border-[#272522] overflow-hidden text-[#efe9de]">
+      <div className="p-8 md:p-10">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
-          {/* Left: Editorial Hero Number */}
-          <div className="flex-1">
-            {/* Mark + Label */}
-            <div className="flex items-center gap-2.5 mb-6">
-              <ClaudeMark className="h-5 w-5 text-[#cc785c]" />
-              <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-[#6c6a64]">
-                Sales Intelligence Platform
+          {/* Left: Headline Revenue Figure */}
+          <div className="flex-1 space-y-4">
+            <div className="flex items-center gap-2">
+              <ClaudeMark className="h-4 w-4 text-[#c26a50]" />
+              <span className="text-xs font-mono text-[#8a847a]">
+                Weekly revenue velocity
               </span>
             </div>
 
-            {/* Giant number */}
-            <div className="flex items-start gap-3 mb-2">
-              <span className="font-serif text-[#a09d96] text-3xl leading-none mt-3">$</span>
+            <div className="flex items-baseline gap-2">
+              <span className="font-serif text-3xl md:text-4xl text-[#8a847a] leading-none">$</span>
               <span
-                className="font-serif text-[#faf9f5] leading-none"
+                className="font-serif text-[#efe9de] leading-none tracking-tight"
                 style={{
-                  fontSize: "clamp(3.5rem, 10vw, 7rem)",
-                  letterSpacing: "-0.04em",
+                  fontSize: "clamp(3.5rem, 8vw, 5.5rem)",
                   fontWeight: 400,
                 }}
               >
@@ -167,107 +145,79 @@ export function HeroBand({
                 })}
               </span>
             </div>
-            <p className="text-sm text-[#6c6a64] font-mono mb-4">
-              Weekly Revenue · This 7-Day Cycle
-            </p>
 
-            {/* Change badge */}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3 pt-1">
               {hasPreviousRevenue ? (
                 <div
-                  className={`flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-mono border ${
+                  className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-mono border ${
                     isUp
-                      ? "bg-[#5db872]/10 border-[#5db872]/30 text-[#5db872]"
-                      : "bg-[#c64545]/10 border-[#c64545]/30 text-[#c64545]"
+                      ? "bg-[#2e7d52]/15 border-[#2e7d52]/30 text-[#4cc38a]"
+                      : "bg-[#b33a3a]/15 border-[#b33a3a]/30 text-[#e5484d]"
                   }`}
                 >
-                  <span className="text-base leading-none">{isUp ? "↑" : "↓"}</span>
-                  {isUp ? "+" : ""}{changePct.toFixed(1)}% week-over-week
+                  {isUp ? (
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  ) : (
+                    <ArrowDownRight className="h-3.5 w-3.5" />
+                  )}
+                  {isUp ? "+" : ""}{changePct.toFixed(1)}% vs prior 7 days
                 </div>
               ) : (
-                <div className="flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-mono border bg-[#8e8b82]/10 border-[#8e8b82]/30 text-[#a09d96]">
-                  {isZeroState ? "Awaiting Data Ingestion" : "Initial Weekly Baseline"}
+                <div className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-mono border border-[#3a3733] bg-[#201e1b] text-[#8a847a]">
+                  {isZeroState ? "Awaiting data" : "Initial baseline period"}
                 </div>
               )}
-              <span className="text-[11px] text-[#6c6a64] font-mono">
-                {hasPreviousRevenue ? "vs previous 7-day period" : "Import CSV to compare periods"}
+              <span className="text-xs text-[#8a847a]">
+                Current 7-day rolling window
               </span>
             </div>
           </div>
 
-          {/* Right: Action panel */}
-          <div className="flex flex-col gap-3 lg:w-72">
-            {/* AI Ticker */}
-            <div className="rounded-xl bg-[#252320] border border-[#3d3d3a] p-4 min-h-[90px] flex flex-col justify-between">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#5db872] animate-pulse" />
-                <span className="text-[9px] font-mono uppercase tracking-[0.15em] text-[#5db872]">
-                  AI Live Feed
+          {/* Right: Signal ticker & fast actions */}
+          <div className="flex flex-col gap-3 lg:w-80">
+            {/* Velocity Signals */}
+            <div className="rounded-xl bg-[#1e1c19] border border-[#2e2b27] p-4 min-h-[84px] flex flex-col justify-between">
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#4cc38a]" />
+                <span className="text-[11px] font-mono text-[#8a847a]">
+                  Signals
                 </span>
               </div>
               <p
-                className="text-xs text-[#a09d96] leading-relaxed transition-opacity duration-300"
+                className="text-xs text-[#aaa398] leading-relaxed transition-opacity duration-200"
                 style={{ opacity: tickerVisible ? 1 : 0 }}
               >
                 {tickerItems[tickerIdx] || tickerItems[0]}
               </p>
             </div>
 
-            {/* CTA buttons */}
-            <div className="flex flex-col gap-2">
+            {/* Quick Actions */}
+            <div className="flex gap-2">
               <button
                 onClick={onOpenChat}
-                className="flex items-center justify-between gap-2 rounded-xl bg-[#cc785c] hover:bg-[#a9583e] text-white px-4 py-3.5 transition-colors group shadow-sm"
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-[#c26a50] hover:bg-[#a85840] text-white px-4 py-2.5 text-xs font-medium transition-colors"
               >
-                <div className="flex items-center gap-2.5">
-                  <MessageSquare className="h-4 w-4" />
-                  <span className="text-sm font-medium">Ask Your Data</span>
-                </div>
-                <Sparkles className="h-3.5 w-3.5 opacity-70 group-hover:opacity-100 transition-opacity" />
+                <MessageSquare className="h-3.5 w-3.5" />
+                Query assistant
               </button>
 
               {isZeroState && onOpenImport && (
                 <button
                   onClick={onOpenImport}
-                  className="flex items-center justify-center gap-2 rounded-xl bg-[#252320] border border-[#cc785c]/40 hover:border-[#cc785c] text-[#faf9f5] px-4 py-2.5 text-xs font-medium transition-colors"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-[#3a3733] bg-[#1e1c19] hover:bg-[#262421] text-[#efe9de] px-3.5 py-2.5 text-xs font-medium transition-colors"
                 >
-                  <UploadCloud className="h-3.5 w-3.5 text-[#cc785c]" />
-                  Import Sales Data (CSV)
+                  <UploadCloud className="h-3.5 w-3.5 text-[#c26a50]" />
+                  Import CSV
                 </button>
               )}
             </div>
 
-            {/* Real data counts */}
-            <div className="flex gap-2">
-              <div className="flex-1 rounded-lg border border-[#3d3d3a] bg-[#252320] px-3 py-2.5 text-center">
-                <p className="text-[10px] font-mono text-[#6c6a64] mb-0.5">Transactions</p>
-                <p className="text-sm font-serif text-[#faf9f5]">
-                  {totalTransactions.toLocaleString()}
-                </p>
-              </div>
-              <div className="flex-1 rounded-lg border border-[#3d3d3a] bg-[#252320] px-3 py-2.5 text-center">
-                <p className="text-[10px] font-mono text-[#6c6a64] mb-0.5">AI Engine</p>
-                <p className="text-sm font-serif text-[#5db872]">Active</p>
-              </div>
+            {/* Counts */}
+            <div className="flex items-center justify-between text-xs font-mono text-[#8a847a] px-1 pt-1">
+              <span>{totalTransactions.toLocaleString()} total transactions</span>
+              <span className="text-[#4cc38a]">Online</span>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Bottom ticker strip */}
-      <div className="relative z-10 border-t border-[#252320] bg-[#141413]/60 backdrop-blur-sm px-8 py-2.5 flex items-center gap-6 overflow-hidden">
-        <BarChart3 className="h-3.5 w-3.5 text-[#cc785c] flex-shrink-0" />
-        <div className="flex gap-8 text-[10px] font-mono text-[#6c6a64] whitespace-nowrap overflow-hidden">
-          <span>
-            <span className="text-[#a09d96]">PLATFORM</span> Multi-Tenant SaaS v2.0
-          </span>
-          <span>
-            <span className="text-[#a09d96]">DB</span> Neon PostgreSQL
-          </span>
-          <span>
-            <span className="text-[#a09d96]">STATUS</span>{" "}
-            <span className="text-[#5db872]">● Isolated Tenant Secured</span>
-          </span>
         </div>
       </div>
     </div>

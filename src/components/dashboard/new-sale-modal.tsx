@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CATEGORIES } from "@/lib/mock-data";
-import { X, PlusCircle, AlertCircle } from "lucide-react";
+import { X, Plus, AlertCircle } from "lucide-react";
 import { ClaudeMark } from "@/components/ui/claude-mark";
 
 interface NewSaleModalProps {
@@ -76,69 +76,68 @@ export function NewSaleModal({ isOpen, onClose, onSuccess }: NewSaleModalProps) 
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-ink/40 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-[#191816]/40 backdrop-blur-sm transition-opacity"
       />
 
       {/* Modal Dialog Card */}
-      <div className="relative z-10 w-full max-w-lg rounded-lg border border-hairline bg-canvas p-7 shadow-card">
-        <div className="flex items-center justify-between border-b border-hairline pb-4 mb-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-surface-card border border-hairline text-primary">
-              <ClaudeMark className="h-5 w-5" />
+      <div className="relative z-10 w-full max-w-lg rounded-xl border border-[#e5e1d8] bg-white p-6 shadow-xl">
+        <div className="flex items-center justify-between border-b border-[#f0ede6] pb-3.5 mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[#faf9f5] border border-[#e5e1d8]">
+              <ClaudeMark className="h-4 w-4 text-[#c26a50]" />
             </div>
             <div>
-              <h3 className="font-serif text-xl font-normal text-ink">Log Transaction</h3>
-              <p className="text-xs text-muted">
-                Injects directly into weekly sales velocity calculation
+              <h3 className="font-serif text-lg font-normal text-[#191816]">Record sale</h3>
+              <p className="text-[11px] text-[#7b7266]">
+                Add an individual transaction to your live database
               </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="rounded-md p-1.5 text-muted hover:bg-surface-soft hover:text-ink transition-colors"
+            className="rounded-md p-1.5 text-[#7b7266] hover:bg-[#faf9f5] hover:text-[#191816] transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 flex items-center gap-2 rounded-md border border-rose-200 bg-rose-50 p-3 text-xs text-error">
-            <AlertCircle className="h-4 w-4 shrink-0" />
+          <div className="mb-4 flex items-center gap-2 rounded-md bg-[#dc2626]/5 border border-[#dc2626]/10 p-2.5 text-xs text-[#dc2626]">
+            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {/* Amount */}
+        <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-body font-medium mb-1.5">
-                Amount (USD) <span className="text-primary">*</span>
+              <label className="block font-medium text-[#5e554a] mb-1">
+                Amount (USD) <span className="text-[#c26a50]">*</span>
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-2.5 text-muted">$</span>
+                <span className="absolute left-2.5 top-2 font-mono text-[#7b7266]">$</span>
                 <Input
                   type="number"
                   step="0.01"
+                  min="0.01"
                   required
-                  placeholder="2450.00"
+                  placeholder="2400.00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="pl-7 font-mono text-ink"
+                  className="h-8 pl-6 font-mono text-xs border-[#e5e1d8] bg-[#faf9f5]"
                 />
               </div>
             </div>
 
-            {/* Category */}
             <div>
-              <label className="block text-body font-medium mb-1.5">
-                Product Category <span className="text-primary">*</span>
+              <label className="block font-medium text-[#5e554a] mb-1">
+                Category <span className="text-[#c26a50]">*</span>
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="h-10 w-full rounded-md border border-hairline bg-canvas px-3 text-xs text-ink focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className="h-8 w-full rounded-md border border-[#e5e1d8] bg-[#faf9f5] px-2 text-xs text-[#191816] focus:outline-none focus:border-[#c26a50]"
               >
                 {CATEGORIES.map((cat) => (
                   <option key={cat} value={cat}>
@@ -149,75 +148,77 @@ export function NewSaleModal({ isOpen, onClose, onSuccess }: NewSaleModalProps) 
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {/* Customer / Client Name */}
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-body font-medium mb-1.5">
-                Customer Name / Account
+              <label className="block font-medium text-[#5e554a] mb-1">
+                Customer Name
               </label>
               <Input
-                placeholder="e.g. Stripe Labs"
+                type="text"
+                placeholder="Acme Corp"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
+                className="h-8 text-xs border-[#e5e1d8] bg-[#faf9f5]"
               />
             </div>
 
-            {/* Order Ref / ID */}
             <div>
-              <label className="block text-body font-medium mb-1.5">
-                Order / Invoice Reference
+              <label className="block font-medium text-[#5e554a] mb-1">
+                Order Reference
               </label>
               <Input
-                placeholder="e.g. ORD-9842"
+                type="text"
+                placeholder="INV-2026-001"
                 value={orderRef}
                 onChange={(e) => setOrderRef(e.target.value)}
-                className="font-mono"
+                className="h-8 font-mono text-xs border-[#e5e1d8] bg-[#faf9f5]"
               />
             </div>
           </div>
 
-          {/* Date & Time */}
           <div>
-            <label className="block text-body font-medium mb-1.5">
+            <label className="block font-medium text-[#5e554a] mb-1">
               Transaction Date & Time
             </label>
             <Input
               type="datetime-local"
               value={soldAt}
               onChange={(e) => setSoldAt(e.target.value)}
-              className="text-body"
+              className="h-8 text-xs font-mono text-[#5e554a] border-[#e5e1d8] bg-[#faf9f5]"
             />
           </div>
 
-          {/* Notes */}
           <div>
-            <label className="block text-body font-medium mb-1.5">
-              Internal Notes (Optional)
+            <label className="block font-medium text-[#5e554a] mb-1">
+              Notes (Optional)
             </label>
             <textarea
               rows={2}
-              placeholder="e.g. Q4 expansion upsell, closed via enterprise pipeline"
+              placeholder="Contract notes, billing cycle, or plan details…"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full rounded-md border border-hairline bg-canvas p-3 text-xs text-ink focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="w-full rounded-md border border-[#e5e1d8] bg-[#faf9f5] p-2 text-xs text-[#191816] focus:outline-none focus:border-[#c26a50]"
             />
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-hairline">
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#f0ede6]">
             <Button
               type="button"
               variant="outline"
+              size="sm"
               onClick={onClose}
               disabled={isSubmitting}
+              className="h-8 text-xs border-[#e5e1d8] bg-white text-[#5e554a]"
             >
               Cancel
             </Button>
             <Button
               type="submit"
+              size="sm"
               disabled={isSubmitting}
-              className="bg-primary hover:bg-primary-active text-on-primary font-medium"
+              className="h-8 text-xs font-medium bg-[#c26a50] hover:bg-[#a85840] text-white"
             >
-              {isSubmitting ? "Recording..." : "Record Transaction"}
+              {isSubmitting ? "Recording…" : "Record transaction"}
             </Button>
           </div>
         </form>

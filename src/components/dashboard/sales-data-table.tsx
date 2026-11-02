@@ -1,10 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { SaleItem } from "@/lib/analytics";
 import { CATEGORIES } from "@/lib/mock-data";
 import { formatCurrency } from "@/lib/utils";
@@ -112,51 +110,52 @@ export function SalesDataTable({ refreshTrigger }: SalesDataTableProps) {
   };
 
   return (
-    <Card variant="cream" className="border-hairline bg-canvas shadow-subtle">
-      <CardHeader className="flex flex-col space-y-3 pb-3 lg:flex-row lg:items-center lg:justify-between lg:space-y-0 border-b border-hairline/60">
+    <div className="rounded-xl border border-[#e5e1d8] bg-white p-5 flex flex-col justify-between">
+      {/* Header */}
+      <div className="flex flex-col space-y-3 pb-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0 border-b border-[#f0ede6]">
         <div>
           <div className="flex items-center gap-2">
-            <CardTitle className="font-serif text-xl font-normal flex items-center gap-2 text-ink">
-              <Receipt className="h-4 w-4 text-primary" />
-              Transactions & Sales Velocity Log
-            </CardTitle>
-            <Badge variant="secondary" className="font-mono text-xs">
-              {totalCount.toLocaleString()} total entries
-            </Badge>
+            <Receipt className="h-4 w-4 text-[#c26a50]" />
+            <h3 className="font-serif text-lg font-normal text-[#1f1b16]">
+              Transaction ledger
+            </h3>
+            <span className="text-[10px] font-mono text-[#7b7266] bg-[#f0ede6] px-1.5 py-0.5 rounded">
+              {totalCount.toLocaleString()} records
+            </span>
           </div>
-          <CardDescription className="mt-1">
-            Real-time filterable transaction ledger with multi-column sorting and date range selection
-          </CardDescription>
+          <p className="text-xs text-[#5e554a] mt-0.5">
+            Filterable sales history with multi-column sorting and direct CSV export
+          </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div>
           <Button
             variant="outline"
             size="sm"
             onClick={exportFilteredCSV}
             disabled={sales.length === 0}
-            className="text-body text-xs"
+            className="h-8 text-xs font-normal border-[#e5e1d8] bg-white text-[#5a5751] hover:text-[#191816]"
           >
-            <Download className="h-3.5 w-3.5 mr-1 text-muted" />
+            <Download className="h-3.5 w-3.5 mr-1.5 text-[#7b7266]" />
             Export CSV
           </Button>
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent className="pt-5">
+      <div className="pt-4">
         {/* Filter Controls Bar */}
         <div className="mb-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
           {/* Search Box */}
           <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted" />
+            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-[#7b7266]" />
             <Input
-              placeholder="Search customer, order #..."
+              placeholder="Search customer, order #…"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="pl-9 text-xs"
+              className="h-8 pl-8 text-xs border-[#e5e1d8] bg-[#faf9f5] focus-visible:ring-1 focus-visible:ring-[#c26a50]"
             />
           </div>
 
@@ -168,9 +167,9 @@ export function SalesDataTable({ refreshTrigger }: SalesDataTableProps) {
                 setCategory(e.target.value);
                 setPage(1);
               }}
-              className="h-10 w-full rounded-md border border-hairline bg-canvas px-3 text-xs text-ink focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="h-8 w-full rounded-md border border-[#e5e1d8] bg-[#faf9f5] px-2.5 text-xs text-[#1f1b16] focus:outline-none focus:border-[#c26a50]"
             >
-              <option value="all">All Categories</option>
+              <option value="all">All categories</option>
               {CATEGORIES.map((cat) => (
                 <option key={cat} value={cat}>
                   {cat}
@@ -180,7 +179,7 @@ export function SalesDataTable({ refreshTrigger }: SalesDataTableProps) {
           </div>
 
           {/* Start Date */}
-          <div className="relative">
+          <div>
             <Input
               type="date"
               value={startDate}
@@ -188,13 +187,13 @@ export function SalesDataTable({ refreshTrigger }: SalesDataTableProps) {
                 setStartDate(e.target.value);
                 setPage(1);
               }}
-              className="text-xs text-body"
-              title="Start Date"
+              className="h-8 text-xs text-[#5e554a] border-[#e5e1d8] bg-[#faf9f5]"
+              title="Start date"
             />
           </div>
 
           {/* End Date */}
-          <div className="relative">
+          <div>
             <Input
               type="date"
               value={endDate}
@@ -202,112 +201,112 @@ export function SalesDataTable({ refreshTrigger }: SalesDataTableProps) {
                 setEndDate(e.target.value);
                 setPage(1);
               }}
-              className="text-xs text-body"
-              title="End Date"
+              className="h-8 text-xs text-[#5e554a] border-[#e5e1d8] bg-[#faf9f5]"
+              title="End date"
             />
           </div>
 
           {/* Reset Filters */}
-          <div className="flex items-center">
+          <div>
             <Button
               variant="ghost"
               size="sm"
               onClick={clearFilters}
-              className="w-full text-xs text-muted hover:text-ink"
+              className="h-8 w-full text-xs text-[#7b7266] hover:text-[#1f1b16] hover:bg-[#faf9f5]"
             >
-              Reset Filters
+              Reset filters
             </Button>
           </div>
         </div>
 
         {/* Transactions Table */}
-        <div className="overflow-x-auto rounded-md border border-hairline bg-canvas">
+        <div className="overflow-x-auto rounded-lg border border-[#e5e1d8]">
           <table className="w-full text-left text-xs">
-            <thead className="bg-surface-soft text-body-strong border-b border-hairline uppercase font-medium tracking-wider text-[11px]">
+            <thead className="bg-[#faf9f5] text-[#5e554a] border-b border-[#e5e1d8] font-normal text-[11px]">
               <tr>
                 <th
                   onClick={() => handleSort("orderRef")}
-                  className="p-3.5 cursor-pointer hover:text-ink transition-colors"
+                  className="p-3 cursor-pointer hover:text-[#1f1b16] transition-colors"
                 >
                   <div className="flex items-center gap-1 font-mono">
-                    Order Ref
-                    <ArrowUpDown className="h-3 w-3 text-muted" />
+                    Order ref
+                    <ArrowUpDown className="h-3 w-3 text-[#7b7266]" />
                   </div>
                 </th>
                 <th
                   onClick={() => handleSort("customerName")}
-                  className="p-3.5 cursor-pointer hover:text-ink transition-colors"
+                  className="p-3 cursor-pointer hover:text-[#1f1b16] transition-colors"
                 >
                   <div className="flex items-center gap-1">
-                    Customer / Account
-                    <ArrowUpDown className="h-3 w-3 text-muted" />
+                    Customer
+                    <ArrowUpDown className="h-3 w-3 text-[#7b7266]" />
                   </div>
                 </th>
                 <th
                   onClick={() => handleSort("category")}
-                  className="p-3.5 cursor-pointer hover:text-ink transition-colors"
+                  className="p-3 cursor-pointer hover:text-[#1f1b16] transition-colors"
                 >
                   <div className="flex items-center gap-1">
                     Category
-                    <ArrowUpDown className="h-3 w-3 text-muted" />
+                    <ArrowUpDown className="h-3 w-3 text-[#7b7266]" />
                   </div>
                 </th>
                 <th
                   onClick={() => handleSort("soldAt")}
-                  className="p-3.5 cursor-pointer hover:text-ink transition-colors"
+                  className="p-3 cursor-pointer hover:text-[#1f1b16] transition-colors"
                 >
-                  <div className="flex items-center gap-1">
-                    Sold At
+                  <div className="flex items-center gap-1 font-mono">
+                    Date
                     {sortBy === "soldAt" ? (
                       sortOrder === "asc" ? (
-                        <ArrowUp className="h-3 w-3 text-primary" />
+                        <ArrowUp className="h-3 w-3 text-[#c26a50]" />
                       ) : (
-                        <ArrowDown className="h-3 w-3 text-primary" />
+                        <ArrowDown className="h-3 w-3 text-[#c26a50]" />
                       )
                     ) : (
-                      <ArrowUpDown className="h-3 w-3 text-muted" />
+                      <ArrowUpDown className="h-3 w-3 text-[#7b7266]" />
                     )}
                   </div>
                 </th>
                 <th
                   onClick={() => handleSort("amount")}
-                  className="p-3.5 text-right cursor-pointer hover:text-ink transition-colors"
+                  className="p-3 text-right cursor-pointer hover:text-[#1f1b16] transition-colors"
                 >
                   <div className="flex items-center justify-end gap-1 font-mono">
                     Amount
                     {sortBy === "amount" ? (
                       sortOrder === "asc" ? (
-                        <ArrowUp className="h-3 w-3 text-primary" />
+                        <ArrowUp className="h-3 w-3 text-[#c26a50]" />
                       ) : (
-                        <ArrowDown className="h-3 w-3 text-primary" />
+                        <ArrowDown className="h-3 w-3 text-[#c26a50]" />
                       )
                     ) : (
-                      <ArrowUpDown className="h-3 w-3 text-muted" />
+                      <ArrowUpDown className="h-3 w-3 text-[#7b7266]" />
                     )}
                   </div>
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-hairline-soft">
+            <tbody className="divide-y divide-[#f0ede6]">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-muted">
+                  <td colSpan={5} className="p-8 text-center text-[#7b7266]">
                     <div className="flex items-center justify-center gap-2">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                      Loading transactions...
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#c26a50] border-t-transparent" />
+                      Loading records…
                     </div>
                   </td>
                 </tr>
               ) : sales.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-12 text-center text-muted">
-                    <div className="flex flex-col items-center justify-center space-y-3">
-                      <div className="h-10 w-10 rounded-full bg-surface-card flex items-center justify-center text-muted border border-hairline">
-                        <Receipt className="h-5 w-5" />
+                  <td colSpan={5} className="p-12 text-center text-[#7b7266]">
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <div className="h-9 w-9 rounded-lg bg-[#faf9f5] flex items-center justify-center text-[#7b7266] border border-[#e5e1d8]">
+                        <Receipt className="h-4 w-4" />
                       </div>
-                      <p className="text-sm font-medium text-ink">No sales records found</p>
-                      <p className="text-xs text-muted max-w-sm">
-                        No transactions have been recorded yet in this workspace. Upload your sales CSV or record a sale to populate your log.
+                      <p className="text-xs font-medium text-[#1f1b16]">No transactions in ledger</p>
+                      <p className="text-[11px] text-[#7b7266] max-w-sm">
+                        Import a sales CSV file or record a sale to populate your ledger.
                       </p>
                     </div>
                   </td>
@@ -316,23 +315,23 @@ export function SalesDataTable({ refreshTrigger }: SalesDataTableProps) {
                 sales.map((item) => (
                   <tr
                     key={item.id}
-                    className="hover:bg-surface-soft/60 transition-colors text-body"
+                    className="hover:bg-[#faf9f5] transition-colors text-[#1f1b16]"
                   >
-                    <td className="p-3.5 font-mono text-muted">
+                    <td className="p-3 font-mono text-[#7b7266]">
                       {item.orderRef || "—"}
                     </td>
-                    <td className="p-3.5 font-medium text-ink">
-                      {item.customerName || "Direct Checkout"}
+                    <td className="p-3 font-medium text-[#1f1b16]">
+                      {item.customerName || "Direct sale"}
                     </td>
-                    <td className="p-3.5">
-                      <span className="inline-block rounded-pill border border-hairline bg-surface-card px-2.5 py-0.5 text-[11px] text-body">
+                    <td className="p-3">
+                      <span className="inline-block rounded px-2 py-0.5 text-[10px] font-mono bg-[#f0ede6] text-[#5e554a]">
                         {item.category}
                       </span>
                     </td>
-                    <td className="p-3.5 font-mono text-muted">
-                      {format(new Date(item.soldAt), "MMM d, yyyy HH:mm")}
+                    <td className="p-3 font-mono text-[#7b7266]">
+                      {format(new Date(item.soldAt), "MMM d, yyyy")}
                     </td>
-                    <td className="p-3.5 text-right font-mono font-medium text-primary">
+                    <td className="p-3 text-right font-mono font-medium text-[#1f1b16] tabular-nums">
                       {formatCurrency(item.amount, item.currency)}
                     </td>
                   </tr>
@@ -343,10 +342,10 @@ export function SalesDataTable({ refreshTrigger }: SalesDataTableProps) {
         </div>
 
         {/* Pagination Bar */}
-        <div className="mt-4 flex flex-col items-center justify-between gap-3 sm:flex-row text-xs text-muted">
+        <div className="mt-4 flex flex-col items-center justify-between gap-3 sm:flex-row text-xs text-[#7b7266]">
           <div>
-            Showing <span className="font-mono text-ink font-medium">{sales.length}</span> of{" "}
-            <span className="font-mono text-ink font-medium">{totalCount}</span> entries
+            Showing <span className="font-mono text-[#1f1b16] font-medium">{sales.length}</span> of{" "}
+            <span className="font-mono text-[#1f1b16] font-medium">{totalCount}</span> records
           </div>
 
           <div className="flex items-center gap-2">
@@ -355,14 +354,14 @@ export function SalesDataTable({ refreshTrigger }: SalesDataTableProps) {
               size="sm"
               disabled={page <= 1}
               onClick={() => setPage(page - 1)}
-              className="h-8 px-2.5"
+              className="h-7 text-xs border-[#e5e1d8] bg-white text-[#5e554a] hover:text-[#1f1b16]"
             >
-              <ChevronLeft className="h-4 w-4 mr-1" />
+              <ChevronLeft className="h-3.5 w-3.5 mr-0.5" />
               Prev
             </Button>
 
-            <span className="font-mono px-2 text-ink">
-              Page {page} of {Math.max(1, totalPages)}
+            <span className="font-mono px-2 text-[#1f1b16]">
+              {page} / {Math.max(1, totalPages)}
             </span>
 
             <Button
@@ -370,14 +369,14 @@ export function SalesDataTable({ refreshTrigger }: SalesDataTableProps) {
               size="sm"
               disabled={page >= totalPages}
               onClick={() => setPage(page + 1)}
-              className="h-8 px-2.5"
+              className="h-7 text-xs border-[#e5e1d8] bg-white text-[#5e554a] hover:text-[#1f1b16]"
             >
               Next
-              <ChevronRight className="h-4 w-4 ml-1" />
+              <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
             </Button>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

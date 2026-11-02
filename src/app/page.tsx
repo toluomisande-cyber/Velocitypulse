@@ -16,18 +16,7 @@ import { AIChatDrawer } from "@/components/dashboard/ai-chat-drawer";
 import { HeroBand } from "@/components/dashboard/hero-band";
 import { ImportsManager } from "@/components/dashboard/imports-manager";
 import { KPISummary, DailyVelocityPoint, WeeklyBarPoint, VelocityGaugeData } from "@/lib/analytics";
-import { motion } from "framer-motion";
-import { UploadCloud, PlusCircle } from "lucide-react";
-
-const fadeInUp = {
-  hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" as const } },
-};
-
-const staggerContainer = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.08 } },
-};
+import { UploadCloud, Plus } from "lucide-react";
 
 export default function DashboardPage({ defaultTab = "overview" }: { defaultTab?: string }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -79,7 +68,7 @@ export default function DashboardPage({ defaultTab = "overview" }: { defaultTab?
   const isZeroState = !loading && totalTransactions === 0;
 
   return (
-    <div className="flex min-h-screen bg-[#faf9f5] text-[#141413] font-sans antialiased" style={{ scrollBehavior: "smooth" }}>
+    <div className="flex min-h-screen bg-[#f7f5f0] text-[#191816] font-sans antialiased" style={{ scrollBehavior: "smooth" }}>
       <Sidebar
         isCollapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -99,10 +88,10 @@ export default function DashboardPage({ defaultTab = "overview" }: { defaultTab?
           sidebarOpen={mobileSidebarOpen}
         />
 
-        <main className="flex-1 space-y-0">
+        <main className="flex-1 pb-16 space-y-8 md:space-y-10">
 
-          {/* ── BAND 1: Hero (dark navy) */}
-          <section id="section-overview" className="px-5 pt-6 pb-8 md:px-8 lg:px-10">
+          {/* ── 1. Hero Overview */}
+          <section id="section-overview" className="max-w-7xl mx-auto w-full px-6 md:px-8 pt-6">
             <HeroBand
               revenue={kpis?.currentWeekRevenue ?? 0}
               changePct={kpis?.revenueChangePct ?? 0}
@@ -113,209 +102,134 @@ export default function DashboardPage({ defaultTab = "overview" }: { defaultTab?
             />
           </section>
 
-          {/* ── ZERO STATE BANNER (Shown when account is new with 0 data) */}
+          {/* ── ZERO STATE (Shown when account has 0 data) */}
           {isZeroState && (
-            <section className="px-5 pb-6 md:px-8 lg:px-10 max-w-7xl mx-auto w-full">
-              <div className="rounded-2xl border-2 border-dashed border-[#cc785c]/40 bg-[#cc785c]/5 p-8 text-center flex flex-col items-center justify-center space-y-4">
-                <div className="w-14 h-14 rounded-2xl bg-[#cc785c]/15 text-[#cc785c] flex items-center justify-center border border-[#cc785c]/30 shadow-subtle">
-                  <UploadCloud className="h-7 w-7" />
+            <section className="max-w-7xl mx-auto w-full px-6 md:px-8">
+              <div className="rounded-xl border border-[#e5e1d8] bg-white p-8 text-center flex flex-col items-center justify-center space-y-3">
+                <div className="w-10 h-10 rounded-lg bg-[#faf9f5] border border-[#e5e1d8] text-[#c26a50] flex items-center justify-center">
+                  <UploadCloud className="h-5 w-5" />
                 </div>
                 <div className="max-w-md space-y-1">
-                  <h3 className="font-serif text-2xl font-normal text-ink">Welcome to Your Workspace</h3>
-                  <p className="text-xs text-muted leading-relaxed">
-                    Your sales ledger is currently empty. Import a CSV file or record transactions to activate real-time sales velocity, KPI pace, and AI forecasting.
+                  <h3 className="font-serif text-xl font-normal text-[#191816]">Workspace initialized</h3>
+                  <p className="text-xs text-[#5e554a] leading-relaxed">
+                    Your sales ledger is ready. Import a CSV file or record a transaction to activate real-time sales velocity, KPI pace, and 4-week projections.
                   </p>
                 </div>
-                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2">
                   <button
                     onClick={() => setIsCsvUploadOpen(true)}
-                    className="inline-flex items-center gap-2 bg-[#cc785c] hover:bg-[#a9583e] text-white text-xs font-medium px-5 py-2.5 rounded-lg transition-colors shadow-sm"
+                    className="inline-flex items-center gap-1.5 bg-[#c26a50] hover:bg-[#a85840] text-white text-xs font-medium px-4 py-2 rounded-lg transition-colors"
                   >
-                    <UploadCloud className="h-4 w-4" />
-                    Import Sales Data (CSV)
+                    <UploadCloud className="h-3.5 w-3.5" />
+                    Import CSV file
                   </button>
                   <button
                     onClick={() => setIsNewSaleOpen(true)}
-                    className="inline-flex items-center gap-2 bg-canvas hover:bg-surface-card border border-hairline text-ink text-xs font-medium px-5 py-2.5 rounded-lg transition-colors"
+                    className="inline-flex items-center gap-1.5 bg-white hover:bg-[#faf9f5] border border-[#e5e1d8] text-[#191816] text-xs font-normal px-3.5 py-2 rounded-lg transition-colors"
                   >
-                    <PlusCircle className="h-4 w-4 text-primary" />
-                    Record Individual Sale
+                    <Plus className="h-3.5 w-3.5 text-[#c26a50]" />
+                    Record sale
                   </button>
                   <a
                     href="/sample_sales_template.csv"
                     download
-                    className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline px-3 py-2 font-mono"
+                    className="inline-flex items-center text-xs text-[#7f7b73] hover:text-[#191816] px-2 py-1 font-mono hover:underline"
                   >
-                    Download CSV Template ↓
+                    Sample template ↓
                   </a>
                 </div>
               </div>
             </section>
           )}
 
-          {/* ── BAND 2: KPI Numbers */}
-          <section className="px-5 pb-10 md:px-8 lg:px-10 max-w-7xl mx-auto w-full">
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-80px" }}
-              variants={staggerContainer}
-            >
-              <motion.div className="mb-5" variants={fadeInUp}>
-                <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#8e8b82] mb-1">
-                  Performance Snapshot
+          {/* ── 2. Performance Snapshot */}
+          <section className="max-w-7xl mx-auto w-full px-6 md:px-8">
+            <div>
+              <div className="mb-4">
+                <p className="text-[11px] font-medium text-[#7f7b73] mb-0.5">
+                  Performance snapshot
                 </p>
-                <h2 className="font-serif text-2xl md:text-3xl font-normal text-[#141413] tracking-tight relative inline-block">
-                  Weekly Metrics
-                  <span className="absolute -bottom-1 left-0 right-0 h-px bg-gradient-to-r from-[#cc785c] to-transparent" />
+                <h2 className="font-serif text-2xl font-normal text-[#191816] tracking-tight">
+                  Weekly metrics
                 </h2>
-              </motion.div>
-              <motion.div variants={fadeInUp}>
-                <KPICards kpis={kpis} isLoading={loading} onOpenImport={() => setIsCsvUploadOpen(true)} />
-              </motion.div>
-            </motion.div>
-          </section>
-
-          {/* ── BAND 3: AI Intelligence (dark navy) */}
-          <section id="section-ai" className="bg-[#0f0e0d] border-t border-b border-[#252320] py-10 px-5 md:px-8 lg:px-10">
-            <div className="max-w-7xl mx-auto">
-              <motion.div
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-80px" }}
-                variants={staggerContainer}
-              >
-                <motion.div className="mb-6 flex items-center justify-between" variants={fadeInUp}>
-                  <div>
-                    <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#6c6a64] mb-1">
-                      Real-Time Velocity AI · Live Analysis
-                    </p>
-                    <h2 className="font-serif text-2xl md:text-3xl font-normal text-[#faf9f5] tracking-tight">
-                      Intelligence Layer
-                    </h2>
-                  </div>
-                  <button
-                    onClick={() => setIsChatOpen(true)}
-                    className="hidden md:flex items-center gap-2 bg-[#cc785c] hover:bg-[#a9583e] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-                  >
-                    Ask Your Data →
-                  </button>
-                </motion.div>
-
-                <motion.div className="grid grid-cols-1 lg:grid-cols-5 gap-5" variants={staggerContainer}>
-                  <motion.div className="lg:col-span-3" variants={fadeInUp}>
-                    <AIInsightsPanel />
-                  </motion.div>
-                  <motion.div className="lg:col-span-2" variants={fadeInUp}>
-                    <AIForecastPanel />
-                  </motion.div>
-                </motion.div>
-              </motion.div>
+              </div>
+              <KPICards kpis={kpis} isLoading={loading} onOpenImport={() => setIsCsvUploadOpen(true)} />
             </div>
           </section>
 
-          {/* ── BAND 4: Charts */}
-          <section id="section-velocity" className="px-5 py-10 md:px-8 lg:px-10 max-w-7xl mx-auto w-full">
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-80px" }}
-              variants={staggerContainer}
-            >
-              <motion.div className="mb-6" variants={fadeInUp}>
-                <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#8e8b82] mb-1">
-                  Visual Analytics
+          {/* ── 3. Visual Analytics & Velocity */}
+          <section id="section-velocity" className="max-w-7xl mx-auto w-full px-6 md:px-8">
+            <div>
+              <div className="mb-4">
+                <p className="text-[11px] font-medium text-[#7f7b73] mb-0.5">
+                  Visual pace
                 </p>
-                <h2 className="font-serif text-2xl md:text-3xl font-normal text-[#141413] tracking-tight relative inline-block">
-                  Sales Velocity Charts
-                  <span className="absolute -bottom-1 left-0 right-0 h-px bg-gradient-to-r from-[#cc785c] to-transparent" />
+                <h2 className="font-serif text-2xl font-normal text-[#191816] tracking-tight">
+                  Sales velocity
                 </h2>
-              </motion.div>
+              </div>
 
-              <motion.div className="grid grid-cols-1 gap-6 lg:grid-cols-3 mb-6" variants={staggerContainer}>
-                <motion.div className="lg:col-span-2" variants={fadeInUp}>
+              <div className="grid grid-cols-1 gap-5 lg:grid-cols-3 mb-5">
+                <div className="lg:col-span-2">
                   <WeeklyGrowthChart data={dailyVelocity} />
-                </motion.div>
-                <motion.div className="lg:col-span-1" variants={fadeInUp}>
+                </div>
+                <div className="lg:col-span-1">
                   <VelocityGauge data={velocityGauge} />
-                </motion.div>
-              </motion.div>
+                </div>
+              </div>
 
-              <motion.div id="section-trends" variants={fadeInUp}>
+              <div id="section-trends">
                 <WoWBreakdownChart data={weeklyBreakdown} />
-              </motion.div>
-            </motion.div>
-          </section>
-
-          {/* ── BAND 5: Data Table */}
-          <section id="section-transactions" className="bg-[#f5f0e8] border-t border-[#e6dfd8] px-5 py-10 md:px-8 lg:px-10">
-            <div className="max-w-7xl mx-auto">
-              <motion.div
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-80px" }}
-                variants={staggerContainer}
-              >
-                <motion.div className="mb-6" variants={fadeInUp}>
-                  <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#8e8b82] mb-1">
-                    Transaction Log
-                  </p>
-                  <h2 className="font-serif text-2xl md:text-3xl font-normal text-[#141413] tracking-tight relative inline-block">
-                    Sales History
-                    <span className="absolute -bottom-1 left-0 right-0 h-px bg-gradient-to-r from-[#cc785c] to-transparent" />
-                  </h2>
-                </motion.div>
-                <motion.div variants={fadeInUp}>
-                  <SalesDataTable refreshTrigger={refreshTrigger} />
-                </motion.div>
-              </motion.div>
+              </div>
             </div>
           </section>
 
-          {/* ── BAND 6: CSV Ingestion + Imports Manager */}
-          <section id="section-ingestion" className="border-t border-[#e6dfd8] px-5 py-12 md:px-8 lg:px-10">
-            <div className="max-w-7xl mx-auto">
-              <motion.div
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-80px" }}
-                variants={staggerContainer}
-              >
-                <motion.div className="mb-6 flex items-center justify-between flex-wrap gap-4" variants={fadeInUp}>
-                  <div>
-                    <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#8e8b82] mb-1">
-                      Data Ingestion
-                    </p>
-                    <h2 className="font-serif text-2xl md:text-3xl font-normal text-[#141413] tracking-tight relative inline-block">
-                      CSV Import History
-                      <span className="absolute -bottom-1 left-0 right-0 h-px bg-gradient-to-r from-[#cc785c] to-transparent" />
-                    </h2>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => setIsNewSaleOpen(true)}
-                      className="inline-flex items-center gap-2 border border-hairline text-ink hover:bg-surface-card text-xs font-medium px-4 py-2 rounded-lg transition-colors"
-                    >
-                      <PlusCircle className="h-3.5 w-3.5 text-primary" />
-                      Record Sale
-                    </button>
-                    <button
-                      onClick={() => setIsCsvUploadOpen(true)}
-                      className="inline-flex items-center gap-2 bg-[#cc785c] hover:bg-[#a9583e] text-white text-xs font-medium px-4 py-2 rounded-lg transition-colors"
-                    >
-                      <UploadCloud className="h-3.5 w-3.5" />
-                      Import CSV
-                    </button>
-                  </div>
-                </motion.div>
-                <motion.div variants={fadeInUp}>
-                  <ImportsManager
-                    onImportDeleted={handleDataUpdated}
-                    onOpenUpload={() => setIsCsvUploadOpen(true)}
-                    refreshTrigger={refreshTrigger}
-                  />
-                </motion.div>
-              </motion.div>
+          {/* ── 4. Intelligence Digest */}
+          <section id="section-ai" className="max-w-7xl mx-auto w-full px-6 md:px-8">
+            <div>
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-medium text-[#7b7266] mb-0.5">
+                    Automated analysis
+                  </p>
+                  <h2 className="font-serif text-2xl font-normal text-[#191816] tracking-tight">
+                    Intelligence digest
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setIsChatOpen(true)}
+                  className="hidden md:inline-flex items-center gap-1.5 text-xs text-[#c26a50] hover:text-[#a85840] font-medium"
+                >
+                  Query assistant →
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+                <div className="lg:col-span-3">
+                  <AIInsightsPanel />
+                </div>
+                <div className="lg:col-span-2">
+                  <AIForecastPanel />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ── 5. Transaction Ledger */}
+          <section id="section-transactions" className="max-w-7xl mx-auto w-full px-6 md:px-8">
+            <div>
+              <SalesDataTable refreshTrigger={refreshTrigger} />
+            </div>
+          </section>
+
+          {/* ── 6. CSV Batch Ingestion History */}
+          <section id="section-ingestion" className="max-w-7xl mx-auto w-full px-6 md:px-8">
+            <div>
+              <ImportsManager
+                onImportDeleted={handleDataUpdated}
+                onOpenUpload={() => setIsCsvUploadOpen(true)}
+                refreshTrigger={refreshTrigger}
+              />
             </div>
           </section>
 

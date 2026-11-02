@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { VelocityMark } from "@/components/ui/claude-mark";
 import { Lock, Mail, ArrowRight, AlertCircle, Building2, CheckCircle2 } from "lucide-react";
 
@@ -28,7 +27,6 @@ export default function LoginPage() {
 
     try {
       if (isSignUp) {
-        // Register new account
         const regRes = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -40,7 +38,6 @@ export default function LoginPage() {
           throw new Error(regData.error || "Failed to create account.");
         }
 
-        // Auto sign-in after successful registration
         const signInRes = await signIn("credentials", {
           email,
           password,
@@ -55,7 +52,6 @@ export default function LoginPage() {
           router.refresh();
         }
       } else {
-        // Sign in existing user
         const res = await signIn("credentials", {
           email,
           password,
@@ -77,104 +73,104 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-canvas p-4 text-ink font-sans">
-      <div className="w-full max-w-md space-y-6">
+    <div className="flex min-h-screen w-full items-center justify-center bg-[#f7f5f0] p-4 text-[#191816] font-sans">
+      <div className="w-full max-w-sm space-y-6">
         {/* Brand Header */}
-        <div className="flex flex-col items-center text-center space-y-3">
-          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-surface-card border border-hairline shadow-subtle">
-            <VelocityMark className="h-7 w-7 text-primary" />
+        <div className="flex flex-col items-center text-center space-y-2.5">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white border border-[#e5e1d8] shadow-xs">
+            <VelocityMark className="h-6 w-6 text-[#c26a50]" />
           </div>
           <div>
-            <h1 className="font-serif text-3xl font-normal tracking-tight text-ink">VelocityPulse</h1>
-            <p className="text-xs text-muted mt-1 font-sans">
-              Executive Sales & Velocity Intelligence Platform
+            <h1 className="font-serif text-2xl font-normal tracking-tight text-[#191816]">VelocityPulse</h1>
+            <p className="text-xs text-[#7b7266] mt-0.5">
+              Sales velocity and revenue analytics
             </p>
           </div>
         </div>
 
         {/* Auth Card */}
-        <Card variant="card" className="border-hairline bg-surface-card shadow-card">
-          <CardHeader className="space-y-1.5 pb-4">
+        <Card className="rounded-xl border border-[#e5e1d8] bg-white shadow-sm p-6">
+          <CardHeader className="p-0 pb-4 space-y-1">
             <div className="flex items-center justify-between">
-              <CardTitle className="font-serif text-2xl font-normal text-ink">
-                {isSignUp ? "Create Account" : "Sign In"}
+              <CardTitle className="font-serif text-xl font-normal text-[#191816]">
+                {isSignUp ? "Create account" : "Sign in"}
               </CardTitle>
-              <Badge variant="coral" className="text-[10px]">
-                MULTI-TENANT
-              </Badge>
+              <span className="text-[10px] font-mono text-[#7b7266] bg-[#f0ede6] px-1.5 py-0.5 rounded">
+                Multi-tenant
+              </span>
             </div>
-            <CardDescription className="text-xs text-muted">
+            <CardDescription className="text-xs text-[#7b7266]">
               {isSignUp
-                ? "Start your isolated enterprise analytics workspace"
-                : "Access your executive sales velocity and real-time ledgers"}
+                ? "Start your isolated analytics workspace"
+                : "Access your weekly velocity and sales ledger"}
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="space-y-4">
+          <CardContent className="p-0 space-y-3.5">
             {error && (
-              <div className="flex items-center gap-2 rounded-md border border-rose-200 bg-rose-50 p-3 text-xs text-error">
-                <AlertCircle className="h-4 w-4 shrink-0" />
+              <div className="flex items-center gap-2 rounded-md border border-[#dc2626]/20 bg-[#dc2626]/5 p-2.5 text-xs text-[#dc2626]">
+                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                 <span>{error}</span>
               </div>
             )}
 
             {success && (
-              <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">
-                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+              <div className="flex items-center gap-2 rounded-md border border-[#16a34a]/20 bg-[#16a34a]/5 p-2.5 text-xs text-[#16a34a]">
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                 <span>{success}</span>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3">
               {isSignUp && (
                 <div>
-                  <label className="block text-xs font-medium text-body mb-1.5">
-                    Organization / Company Name
+                  <label className="block text-xs font-medium text-[#5e554a] mb-1">
+                    Company name
                   </label>
                   <div className="relative">
-                    <Building2 className="absolute left-3 top-3 h-4 w-4 text-muted" />
+                    <Building2 className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-[#7b7266]" />
                     <Input
                       type="text"
                       required
-                      placeholder="Acme Commerce Inc."
+                      placeholder="Acme Analytics Inc."
                       value={businessName}
                       onChange={(e) => setBusinessName(e.target.value)}
-                      className="pl-9.5 text-xs bg-canvas"
+                      className="h-8 pl-8 text-xs border-[#e5e1d8] bg-[#faf9f5]"
                     />
                   </div>
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-medium text-body mb-1.5">
-                  Corporate Email
+                <label className="block text-xs font-medium text-[#5e554a] mb-1">
+                  Email
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted" />
+                  <Mail className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-[#7b7266]" />
                   <Input
                     type="email"
                     required
                     placeholder="executive@company.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-9.5 text-xs bg-canvas"
+                    className="h-8 pl-8 text-xs border-[#e5e1d8] bg-[#faf9f5]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-body mb-1.5">
+                <label className="block text-xs font-medium text-[#5e554a] mb-1">
                   Password
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted" />
+                  <Lock className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-[#7b7266]" />
                   <Input
                     type="password"
                     required
-                    placeholder="••••••••••••"
+                    placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-9.5 text-xs bg-canvas"
+                    className="h-8 pl-8 text-xs border-[#e5e1d8] bg-[#faf9f5]"
                   />
                 </div>
               </div>
@@ -182,21 +178,20 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-primary hover:bg-primary-active text-on-primary font-medium text-xs mt-3 h-10 shadow-sm"
+                className="w-full h-8 text-xs font-medium bg-[#c26a50] hover:bg-[#a85840] text-white mt-2"
               >
-                {loading
-                  ? isSignUp
-                    ? "Creating Account..."
-                    : "Authenticating..."
-                  : isSignUp
-                  ? "Register Organization"
-                  : "Sign In to Workspace"}
-                <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+                {loading ? (
+                  "Processing…"
+                ) : (
+                  <>
+                    <span>{isSignUp ? "Register workspace" : "Sign in"}</span>
+                    <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                  </>
+                )}
               </Button>
             </form>
 
-            {/* Toggle Sign Up / Sign In */}
-            <div className="pt-2 text-center border-t border-hairline/80">
+            <div className="pt-2 text-center border-t border-[#f0ede6]">
               <button
                 type="button"
                 onClick={() => {
@@ -204,18 +199,21 @@ export default function LoginPage() {
                   setError(null);
                   setSuccess(null);
                 }}
-                className="text-xs text-primary hover:underline font-medium"
+                className="text-xs text-[#7b7266] hover:text-[#191816] transition-colors"
               >
-                {isSignUp
-                  ? "Already have an account? Sign In"
-                  : "Don't have an account? Create an Account"}
+                {isSignUp ? (
+                  <>Already have an account? <span className="text-[#c26a50] font-medium">Sign in</span></>
+                ) : (
+                  <>Need a new workspace? <span className="text-[#c26a50] font-medium">Create account</span></>
+                )}
               </button>
             </div>
           </CardContent>
         </Card>
 
-        <p className="text-center text-[11px] text-muted">
-          Isolated Multi-Tenant Security · End-to-End Encrypted
+        {/* Footer info */}
+        <p className="text-center text-[11px] font-mono text-[#7b7266]">
+          Postgres tenant isolation active
         </p>
       </div>
     </div>

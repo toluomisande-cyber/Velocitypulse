@@ -11,11 +11,9 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { WeeklyBarPoint } from "@/lib/analytics";
-import { formatCurrency, formatPercentage } from "@/lib/utils";
-import { BarChart3, ArrowUpRight, ArrowDownRight, Layers } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
+import { BarChart3 } from "lucide-react";
 
 interface WoWBreakdownChartProps {
   data: WeeklyBarPoint[];
@@ -33,146 +31,122 @@ export function WoWBreakdownChart({ data }: WoWBreakdownChartProps) {
   );
 
   return (
-    <Card variant="card" className="border-hairline bg-surface-card shadow-subtle">
-      <CardHeader className="flex flex-col space-y-2 pb-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+    <div className="rounded-xl border border-[#e5e1d8] bg-white p-5 flex flex-col justify-between">
+      {/* Header */}
+      <div className="flex flex-col space-y-3 pb-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 border-b border-[#f0ede6]">
         <div>
           <div className="flex items-center gap-2">
-            <CardTitle className="font-serif text-xl font-normal flex items-center gap-2 text-ink">
-              <BarChart3 className="h-4 w-4 text-primary" />
-              Week-over-Week Revenue Breakdown
-            </CardTitle>
-            <Badge variant="secondary" className="font-mono text-[11px]">
-              Last {data.length} Weeks
-            </Badge>
+            <BarChart3 className="h-4 w-4 text-[#c26a50]" />
+            <h3 className="font-serif text-lg font-normal text-[#1f1b16]">
+              Weekly revenue progression
+            </h3>
+            <span className="text-[10px] font-mono text-[#7b7266] bg-[#f0ede6] px-1.5 py-0.5 rounded">
+              Last {data.length} weeks
+            </span>
           </div>
-          <CardDescription className="mt-1">
-            Aggregated revenue trend, order throughput, and velocity progression
-          </CardDescription>
+          <p className="text-xs text-[#5e554a] mt-0.5">
+            Aggregated revenue pace and order throughput per weekly cycle
+          </p>
         </div>
 
-        <div className="flex items-center gap-3 text-xs">
-          <div className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm bg-primary" />
-            <span className="text-body font-medium">Current Week</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm bg-body" />
-            <span className="text-muted">Past Weeks</span>
-          </div>
+        <div className="flex items-center gap-4 text-xs font-mono text-[#7b7266]">
+          <span className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-xs bg-[#c26a50]" /> Current cycle
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-xs bg-[#d8d3c8]" /> Prior cycles
+          </span>
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent className="pt-2">
-        {/* KPI Strip */}
-        <div className="mb-4 grid grid-cols-2 gap-2 rounded-md border border-hairline bg-canvas p-3 sm:grid-cols-4">
-          <div>
-            <span className="text-[11px] text-muted">Total Ledger Revenue:</span>
-            <p className="font-mono text-base font-semibold text-ink">
-              {formatCurrency(totalRevenue)}
-            </p>
-          </div>
-          <div>
-            <span className="text-[11px] text-muted">Average Weekly Rev:</span>
-            <p className="font-mono text-base font-semibold text-ink">
-              {formatCurrency(avgWeeklyRevenue)}
-            </p>
-          </div>
-          <div>
-            <span className="text-[11px] text-muted">Total Units Sold:</span>
-            <p className="font-mono text-base font-semibold text-ink">
-              {totalOrders.toLocaleString()}
-            </p>
-          </div>
-          <div>
-            <span className="text-[11px] text-muted">Peak Velocity Week:</span>
-            <p className="font-mono text-base font-semibold text-primary truncate">
-              {peakWeek.revenue > 0 ? `${peakWeek.weekLabel} (${formatCurrency(peakWeek.revenue)})` : "—"}
-            </p>
-          </div>
+      {/* KPI summary strip */}
+      <div className="my-4 grid grid-cols-2 sm:grid-cols-4 gap-3 rounded-lg border border-[#f0ede6] bg-[#faf9f5] p-3 text-xs">
+        <div>
+          <span className="text-[11px] text-[#7b7266]">Total revenue:</span>
+          <p className="font-mono text-sm font-medium text-[#1f1b16] tabular-nums">
+            {formatCurrency(totalRevenue)}
+          </p>
         </div>
+        <div>
+          <span className="text-[11px] text-[#7b7266]">Weekly average:</span>
+          <p className="font-mono text-sm font-medium text-[#1f1b16] tabular-nums">
+            {formatCurrency(avgWeeklyRevenue)}
+          </p>
+        </div>
+        <div>
+          <span className="text-[11px] text-[#7b7266]">Orders placed:</span>
+          <p className="font-mono text-sm font-medium text-[#1f1b16] tabular-nums">
+            {totalOrders.toLocaleString()}
+          </p>
+        </div>
+        <div>
+          <span className="text-[11px] text-[#7b7266]">Peak week:</span>
+          <p className="font-mono text-sm font-medium text-[#c26a50] truncate tabular-nums">
+            {peakWeek.revenue > 0 ? `${peakWeek.weekLabel} (${formatCurrency(peakWeek.revenue)})` : "—"}
+          </p>
+        </div>
+      </div>
 
+      {/* Chart */}
+      <div className="h-64 w-full">
         {isZeroState ? (
-          <div className="h-64 flex flex-col items-center justify-center space-y-2 border border-hairline rounded-lg bg-surface-soft/40 text-center p-6">
-            <Layers className="h-8 w-8 text-[#cc785c] opacity-60" />
-            <p className="text-sm font-medium text-ink">Awaiting Multi-Week Trend Data</p>
-            <p className="text-xs text-muted max-w-sm">
-              As transactions accumulate or are imported, your 10-week historical revenue cadence will render here.
+          <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-2">
+            <p className="text-xs text-[#5e554a]">No historical weeks recorded</p>
+            <p className="text-[11px] text-[#7b7266]">
+              Import multi-week transactions to view historical trends.
             </p>
           </div>
         ) : (
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e6dfd8" vertical={false} />
-                <XAxis
-                  dataKey="weekLabel"
-                  stroke="#8e8b82"
-                  fontSize={11}
-                  tickLine={false}
-                  axisLine={{ stroke: "#e6dfd8" }}
-                />
-                <YAxis
-                  stroke="#8e8b82"
-                  fontSize={11}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(val) => `$${val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}`}
-                />
-                <Tooltip
-                  content={({ active, payload, label }) => {
-                    if (active && payload && payload.length) {
-                      const item = payload[0].payload as WeeklyBarPoint;
-                      const isUp = item.velocityPct >= 0;
-
-                      return (
-                        <div className="rounded-md border border-hairline bg-surface-card p-3 text-xs shadow-card">
-                          <p className="font-semibold text-ink border-b border-hairline pb-1 mb-1.5 font-serif">
-                            {label} ({item.startDate} to {item.endDate})
-                          </p>
-                          <div className="space-y-1 font-mono">
-                            <p className="flex justify-between gap-4 text-ink">
-                              <span className="text-muted">Total Revenue:</span>
-                              <span className="font-semibold">{formatCurrency(item.revenue)}</span>
-                            </p>
-                            <p className="flex justify-between gap-4 text-muted">
-                              <span>Orders (Units):</span>
-                              <span className="text-ink">{item.units}</span>
-                            </p>
-                            <p className="flex justify-between gap-4 text-muted">
-                              <span>Average Order Value:</span>
-                              <span className="text-ink">{formatCurrency(item.aov)}</span>
-                            </p>
-                            <p className="flex justify-between gap-4 pt-1 border-t border-hairline text-body">
-                              <span>WoW Velocity:</span>
-                              <span className={`font-semibold ${isUp ? "text-primary" : "text-error"}`}>
-                                {isUp ? "+" : ""}
-                                {item.velocityPct.toFixed(1)}%
-                              </span>
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Bar dataKey="revenue" radius={[3, 3, 0, 0]} maxBarSize={48}>
-                  {data.map((entry, index) => {
-                    const isLast = index === data.length - 1;
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0ede6" vertical={false} />
+              <XAxis
+                dataKey="weekLabel"
+                stroke="#7b7266"
+                fontSize={10}
+                tickLine={false}
+                axisLine={false}
+                fontFamily="monospace"
+              />
+              <YAxis
+                stroke="#7b7266"
+                fontSize={10}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                fontFamily="monospace"
+              />
+              <Tooltip
+                cursor={{ fill: "rgba(0,0,0,0.02)" }}
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const d = payload[0].payload as WeeklyBarPoint;
                     return (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={isLast ? "#cc785c" : "#252320"}
-                        className="transition-opacity hover:opacity-80"
-                      />
+                      <div className="rounded-lg border border-[#e5e1d8] bg-white p-2.5 shadow-sm text-xs font-mono space-y-1">
+                        <p className="font-sans font-medium text-[#1f1b16]">{d.weekLabel}</p>
+                        <p className="text-[#c26a50]">{formatCurrency(d.revenue)}</p>
+                        <p className="text-[#7b7266]">{d.units} transactions · AOV {formatCurrency(d.aov)}</p>
+                      </div>
                     );
-                  })}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+                  }
+                  return null;
+                }}
+              />
+              <Bar dataKey="revenue" radius={[3, 3, 0, 0]}>
+                {data.map((entry, index) => {
+                  const isLast = index === data.length - 1;
+                  return (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={isLast ? "#c26a50" : "#d8d3c8"}
+                    />
+                  );
+                })}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

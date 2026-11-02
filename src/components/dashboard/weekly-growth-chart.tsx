@@ -9,13 +9,10 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { DailyVelocityPoint } from "@/lib/analytics";
 import { formatCurrency } from "@/lib/utils";
-import { Activity, Zap, TrendingUp } from "lucide-react";
+import { Activity } from "lucide-react";
 
 interface WeeklyGrowthChartProps {
   data: DailyVelocityPoint[];
@@ -34,214 +31,162 @@ export function WeeklyGrowthChart({ data }: WeeklyGrowthChartProps) {
   const isZeroState = totalCurr === 0 && totalPrev === 0;
 
   return (
-    <Card variant="dark" className="border-surface-dark-elevated bg-surface-dark text-on-dark shadow-dark">
-      <CardHeader className="flex flex-col space-y-3 pb-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+    <div className="rounded-xl border border-[#e5e1d8] bg-white p-5 flex flex-col justify-between">
+      {/* Header */}
+      <div className="flex flex-col space-y-3 pb-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 border-b border-[#f0ede6]">
         <div>
           <div className="flex items-center gap-2">
-            <CardTitle className="font-serif text-xl font-normal flex items-center gap-2 text-on-dark">
-              <Activity className="h-4 w-4 text-primary" />
-              Weekly Sales Velocity Curve
-            </CardTitle>
-            <Badge variant="dark" className="font-mono text-[11px]">
-              Mon – Sun Pacing
-            </Badge>
+            <Activity className="h-4 w-4 text-[#c26a50]" />
+            <h3 className="font-serif text-lg font-normal text-[#1f1b16]">
+              Weekly sales velocity curve
+            </h3>
+            <span className="text-[10px] font-mono text-[#7b7266] bg-[#f0ede6] px-1.5 py-0.5 rounded">
+              Mon – Sun
+            </span>
           </div>
-          <CardDescription className="mt-1 text-on-dark-soft">
-            Visualizing daily sales velocity compared against the prior baseline
-          </CardDescription>
+          <p className="text-xs text-[#5e554a] mt-0.5">
+            Daily velocity pace compared against prior 7-day period
+          </p>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <div className="flex rounded-md border border-surface-dark-elevated bg-surface-dark-soft p-1">
-            <button
-              onClick={() => setViewMode("daily")}
-              className={`rounded-sm px-3 py-1 text-xs font-medium transition-colors ${
-                viewMode === "daily"
-                  ? "bg-surface-dark-elevated text-on-dark shadow-subtle"
-                  : "text-on-dark-soft hover:text-on-dark"
-              }`}
-            >
-              Daily Sales
-            </button>
-            <button
-              onClick={() => setViewMode("cumulative")}
-              className={`rounded-sm px-3 py-1 text-xs font-medium transition-colors ${
-                viewMode === "cumulative"
-                  ? "bg-surface-dark-elevated text-on-dark shadow-subtle"
-                  : "text-on-dark-soft hover:text-on-dark"
-              }`}
-            >
-              Cumulative Pace
-            </button>
-          </div>
+        {/* View mode toggle */}
+        <div className="flex items-center rounded-lg border border-[#e5e1d8] bg-[#f7f5f0] p-0.5 self-start sm:self-auto text-xs">
+          <button
+            onClick={() => setViewMode("daily")}
+            className={`rounded-md px-2.5 py-1 transition-colors ${
+              viewMode === "daily"
+                ? "bg-white text-[#1f1b16] font-medium shadow-xs"
+                : "text-[#7b7266] hover:text-[#1f1b16]"
+            }`}
+          >
+            Daily pace
+          </button>
+          <button
+            onClick={() => setViewMode("cumulative")}
+            className={`rounded-md px-2.5 py-1 transition-colors ${
+              viewMode === "cumulative"
+                ? "bg-white text-[#1f1b16] font-medium shadow-xs"
+                : "text-[#7b7266] hover:text-[#1f1b16]"
+            }`}
+          >
+            Cumulative
+          </button>
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent className="pt-2">
-        {/* KPI Strip */}
-        <div className="mb-4 grid grid-cols-2 gap-2 rounded-md border border-surface-dark-elevated bg-surface-dark-soft p-3 sm:grid-cols-3">
-          <div>
-            <span className="text-[11px] text-on-dark-soft">This Week:</span>
-            <p className="font-mono text-base font-semibold text-on-dark">
-              {formatCurrency(totalCurr)}
-            </p>
-          </div>
-          <div>
-            <span className="text-[11px] text-on-dark-soft">Prior Week:</span>
-            <p className="font-mono text-base font-semibold text-on-dark-soft">
-              {totalPrev > 0 ? formatCurrency(totalPrev) : "—"}
-            </p>
-          </div>
-          <div className="col-span-2 sm:col-span-1">
-            <span className="text-[11px] text-on-dark-soft">Delta:</span>
-            <p
-              className={`font-mono text-base font-semibold ${
-                delta > 0
-                  ? "text-primary"
-                  : delta < 0
-                  ? "text-error"
-                  : "text-on-dark-soft"
-              }`}
-            >
-              {totalPrev > 0 ? (
-                <>
-                  {delta >= 0 ? "+" : ""}
-                  {formatCurrency(delta)} ({deltaPct >= 0 ? "+" : ""}
-                  {deltaPct.toFixed(1)}%)
-                </>
-              ) : (
-                "—"
-              )}
-            </p>
-          </div>
+      {/* KPI Micro Strip */}
+      <div className="my-4 grid grid-cols-2 sm:grid-cols-3 gap-3 rounded-lg border border-[#f0ede6] bg-[#faf9f5] p-3 text-xs">
+        <div>
+          <span className="text-[11px] text-[#7b7266]">Current cycle:</span>
+          <p className="font-mono text-sm font-medium text-[#1f1b16] tabular-nums">
+            {formatCurrency(totalCurr)}
+          </p>
         </div>
+        <div>
+          <span className="text-[11px] text-[#7b7266]">Prior cycle:</span>
+          <p className="font-mono text-sm font-medium text-[#1f1b16] tabular-nums">
+            {formatCurrency(totalPrev)}
+          </p>
+        </div>
+        <div className="col-span-2 sm:col-span-1">
+          <span className="text-[11px] text-[#7b7266]">Net pacing:</span>
+          <p
+            className={`font-mono text-sm font-medium tabular-nums ${
+              delta >= 0 ? "text-[#16a34a]" : "text-[#dc2626]"
+            }`}
+          >
+            {totalPrev > 0 ? `${delta >= 0 ? "+" : ""}${deltaPct.toFixed(1)}%` : "Baseline"}
+          </p>
+        </div>
+      </div>
 
+      {/* Chart */}
+      <div className="h-64 w-full">
         {isZeroState ? (
-          <div className="h-64 flex flex-col items-center justify-center space-y-2 border border-surface-dark-elevated rounded-lg bg-surface-dark-soft/50 text-center p-6">
-            <Activity className="h-8 w-8 text-[#cc785c] opacity-60" />
-            <p className="text-sm font-medium text-on-dark">Awaiting Weekly Velocity Data</p>
-            <p className="text-xs text-on-dark-soft max-w-sm">
-              Your daily Monday through Sunday velocity curve will render automatically once sales are recorded.
+          <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-2">
+            <p className="text-xs text-[#5e554a]">No transactions in current window</p>
+            <p className="text-[11px] text-[#7b7266]">
+              Import sales records to plot velocity curves.
             </p>
           </div>
         ) : (
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
-                data={data}
-                margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
-              >
-                <defs>
-                  <linearGradient id="velocityCoralGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#cc785c" stopOpacity={0.35} />
-                    <stop offset="95%" stopColor="#cc785c" stopOpacity={0.0} />
-                  </linearGradient>
-                  <linearGradient id="velocityBaselineGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8e8b82" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#8e8b82" stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="#252320"
-                  vertical={false}
-                />
-
-                <XAxis
-                  dataKey="dayShort"
-                  stroke="#6c6a64"
-                  fontSize={11}
-                  tickLine={false}
-                  axisLine={{ stroke: "#252320" }}
-                />
-
-                <YAxis
-                  stroke="#6c6a64"
-                  fontSize={11}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(val) => `$${val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}`}
-                />
-
-                <Tooltip
-                  content={({ active, payload, label }) => {
-                    if (active && payload && payload.length) {
-                      const curr = Number(payload.find((p) => p.dataKey === currentKey)?.value || 0);
-                      const prev = Number(payload.find((p) => p.dataKey === previousKey)?.value || 0);
-                      const diff = curr - prev;
-
-                      return (
-                        <div className="rounded-md border border-surface-dark-elevated bg-surface-dark p-3 text-xs shadow-dark">
-                          <p className="font-semibold text-on-dark border-b border-surface-dark-elevated pb-1 mb-1.5 font-serif">
-                            {label} ({viewMode === "daily" ? "Daily" : "Cumulative"})
-                          </p>
-                          <div className="space-y-1 font-mono">
-                            <p className="text-primary flex items-center justify-between gap-4">
-                              <span>This Week:</span>
-                              <span className="font-semibold">{formatCurrency(curr)}</span>
-                            </p>
-                            <p className="text-on-dark-soft flex items-center justify-between gap-4">
-                              <span>Prior Week:</span>
-                              <span>{prev > 0 ? formatCurrency(prev) : "—"}</span>
-                            </p>
-                            {prev > 0 && (
-                              <p
-                                className={`pt-1 border-t border-surface-dark-elevated flex items-center justify-between gap-4 ${
-                                  diff >= 0 ? "text-accent-teal" : "text-error"
-                                }`}
-                              >
-                                <span>Variance:</span>
-                                <span>
-                                  {diff >= 0 ? "+" : ""}
-                                  {formatCurrency(diff)}
-                                </span>
-                              </p>
-                            )}
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="unslopCurrentGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#c26a50" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="#c26a50" stopOpacity={0.0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0ede6" vertical={false} />
+              <XAxis
+                dataKey="day"
+                stroke="#7b7266"
+                fontSize={10}
+                tickLine={false}
+                axisLine={false}
+                fontFamily="monospace"
+              />
+              <YAxis
+                stroke="#7b7266"
+                fontSize={10}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                fontFamily="monospace"
+              />
+              <Tooltip
+                content={({ active, payload, label }) => {
+                  if (active && payload && payload.length) {
+                    return (
+                      <div className="rounded-lg border border-[#e5e1d8] bg-white p-2.5 shadow-sm text-xs font-mono space-y-1">
+                        <p className="text-[11px] text-[#7b7266] font-sans">{label}</p>
+                        {payload.map((p, i) => (
+                          <div key={i} className="flex items-center justify-between gap-4">
+                            <span className="text-[#5e554a]">
+                              {p.dataKey === currentKey ? "Current:" : "Prior:"}
+                            </span>
+                            <span className="font-medium text-[#1f1b16]">
+                              {formatCurrency(Number(p.value) || 0)}
+                            </span>
                           </div>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-
-                <Legend
-                  verticalAlign="top"
-                  align="right"
-                  height={30}
-                  iconType="circle"
-                  iconSize={7}
-                  formatter={(value) => (
-                    <span className="text-[11px] font-sans text-on-dark-soft capitalize">
-                      {value === currentKey ? "Current Week" : "Prior Baseline"}
-                    </span>
-                  )}
-                />
-
-                <Area
-                  type="monotone"
-                  dataKey={previousKey}
-                  name={previousKey}
-                  stroke="#6c6a64"
-                  strokeWidth={2}
-                  strokeDasharray="4 4"
-                  fill="url(#velocityBaselineGrad)"
-                />
-
-                <Area
-                  type="monotone"
-                  dataKey={currentKey}
-                  name={currentKey}
-                  stroke="#cc785c"
-                  strokeWidth={2.5}
-                  fill="url(#velocityCoralGrad)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+                        ))}
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+              <Area
+                type="monotone"
+                dataKey={previousKey}
+                stroke="#d8d3c8"
+                strokeWidth={1.5}
+                strokeDasharray="4 4"
+                fill="none"
+              />
+              <Area
+                type="monotone"
+                dataKey={currentKey}
+                stroke="#c26a50"
+                strokeWidth={2}
+                fill="url(#unslopCurrentGrad)"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
         )}
-      </CardContent>
-    </Card>
+      </div>
+
+      <div className="flex items-center justify-between pt-3 border-t border-[#f0ede6] text-[11px] font-mono text-[#7b7266]">
+        <div className="flex items-center gap-4">
+          <span className="flex items-center gap-1.5">
+            <span className="h-0.5 w-3 bg-[#c26a50]" /> Current cycle
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-0.5 w-3 bg-[#d8d3c8] border-t border-dashed" /> Prior cycle
+          </span>
+        </div>
+      </div>
+    </div>
   );
 }

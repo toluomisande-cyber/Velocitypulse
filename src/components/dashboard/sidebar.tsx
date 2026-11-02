@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   TrendingUp,
@@ -26,12 +26,12 @@ interface SidebarProps {
 }
 
 const navItems = [
-  { id: "overview", label: "Dashboard Overview", href: "/overview", icon: LayoutDashboard },
-  { id: "ai", label: "AI Intelligence", href: "/intelligence", icon: Brain },
-  { id: "velocity", label: "Weekly Sales Velocity", href: "/velocity", icon: Activity },
-  { id: "trends", label: "WoW Revenue Trends", href: "/trends", icon: TrendingUp },
-  { id: "transactions", label: "Sales Log & Table", href: "/transactions", icon: Receipt },
-  { id: "ingestion", label: "Data Ingestion (CSV)", href: "/ingestion", icon: FileSpreadsheet },
+  { id: "overview", label: "Overview", href: "/overview", icon: LayoutDashboard },
+  { id: "ai", label: "Intelligence digest", href: "/intelligence", icon: Brain },
+  { id: "velocity", label: "Sales velocity", href: "/velocity", icon: Activity },
+  { id: "trends", label: "Weekly breakdown", href: "/trends", icon: TrendingUp },
+  { id: "transactions", label: "Sales ledger", href: "/transactions", icon: Receipt },
+  { id: "ingestion", label: "CSV imports", href: "/ingestion", icon: FileSpreadsheet },
 ];
 
 export function Sidebar({
@@ -43,12 +43,10 @@ export function Sidebar({
   onCloseMobile,
 }: SidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
 
   const handleNavClick = (e: React.MouseEvent, item: typeof navItems[0]) => {
     onCloseMobile();
 
-    // If on the root dashboard page, smooth scroll to section
     if (pathname === "/" || pathname === item.href) {
       if (onSelectTab) onSelectTab(item.id);
       const el = document.getElementById(`section-${item.id}`);
@@ -66,32 +64,32 @@ export function Sidebar({
       {mobileOpen && (
         <div
           onClick={onCloseMobile}
-          className="fixed inset-0 z-40 bg-ink/40 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-40 bg-[#191816]/40 backdrop-blur-sm md:hidden"
         />
       )}
 
-      {/* Sidebar container — sticky on desktop, fixed slide-in on mobile */}
+      {/* Sidebar container */}
       <aside
         className={cn(
-          "fixed top-0 left-0 z-50 flex flex-col border-r border-hairline bg-surface-soft transition-all duration-300",
+          "fixed top-0 left-0 z-50 flex flex-col border-r border-[#e5e1d8] bg-[#f7f5f0] transition-all duration-200",
           "md:sticky md:top-0 md:z-30 md:h-screen md:self-start md:overflow-y-auto",
           mobileOpen ? "translate-x-0 w-64 h-full" : "-translate-x-full md:translate-x-0",
-          isCollapsed ? "md:w-20" : "md:w-64"
+          isCollapsed ? "md:w-18" : "md:w-64"
         )}
       >
-        {/* Brand / Logo Section */}
-        <div className="flex h-16 shrink-0 items-center justify-between border-b border-hairline px-4 bg-canvas/60">
-          <Link href="/" className="flex items-center gap-3 overflow-hidden group">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-canvas border border-hairline shadow-subtle group-hover:border-primary/50 transition-colors">
-              <ClaudeMark className="h-5 w-5 text-primary" />
+        {/* Brand Section */}
+        <div className="flex h-14 shrink-0 items-center justify-between border-b border-[#e5e1d8] px-4">
+          <Link href="/" className="flex items-center gap-2.5 overflow-hidden group">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white border border-[#e5e1d8] transition-colors">
+              <ClaudeMark className="h-4 w-4 text-[#c26a50]" />
             </div>
             {!isCollapsed && (
               <div className="flex flex-col overflow-hidden">
-                <span className="truncate font-serif text-base font-normal tracking-tight text-ink">
+                <span className="truncate font-serif text-sm font-normal tracking-tight text-[#191816]">
                   VelocityPulse
                 </span>
-                <span className="truncate text-[10px] text-muted font-sans">
-                  SaaS Analytics Suite
+                <span className="truncate text-[10px] text-[#7f7b73] font-mono">
+                  SaaS analytics
                 </span>
               </div>
             )}
@@ -99,13 +97,13 @@ export function Sidebar({
 
           <button
             onClick={onToggleCollapse}
-            className="hidden md:flex h-7 w-7 items-center justify-center rounded-md border border-hairline text-muted hover:bg-surface-card hover:text-ink transition-colors"
-            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            className="hidden md:flex h-6 w-6 items-center justify-center rounded-md text-[#7f7b73] hover:bg-[#eae6dc] hover:text-[#191816] transition-colors"
+            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {isCollapsed ? (
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-3.5 w-3.5" />
             ) : (
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-3.5 w-3.5" />
             )}
           </button>
         </div>
@@ -113,8 +111,8 @@ export function Sidebar({
         {/* Navigation list */}
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
           {!isCollapsed && (
-            <p className="px-3 pb-2 text-[10px] font-medium uppercase tracking-wider text-muted-soft">
-              Analytics & Tracking
+            <p className="px-3 pb-2 text-[11px] font-medium text-[#7f7b73]">
+              Workspace
             </p>
           )}
 
@@ -131,49 +129,46 @@ export function Sidebar({
                 href={item.href}
                 onClick={(e) => handleNavClick(e, item)}
                 className={cn(
-                  "group flex w-full items-center gap-3 rounded-md px-3 py-2 text-xs font-medium transition-all",
+                  "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-xs font-normal transition-colors",
                   isActive
-                    ? "bg-surface-card text-ink font-semibold shadow-subtle border border-hairline/80"
-                    : "text-body hover:bg-surface-card/60 hover:text-ink"
+                    ? "bg-white text-[#191816] font-medium border border-[#e5e1d8] shadow-xs"
+                    : "text-[#5a5751] hover:bg-[#eae6dc]/60 hover:text-[#191816]"
                 )}
                 title={isCollapsed ? item.label : undefined}
               >
                 <Icon
                   className={cn(
                     "h-4 w-4 shrink-0 transition-colors",
-                    isActive ? "text-primary" : "text-muted group-hover:text-ink"
+                    isActive ? "text-[#c26a50]" : "text-[#7f7b73] group-hover:text-[#191816]"
                   )}
                 />
                 {!isCollapsed && (
                   <span className="truncate text-left">{item.label}</span>
                 )}
                 {isActive && !isCollapsed && (
-                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#c26a50] shrink-0" />
                 )}
               </Link>
             );
           })}
         </nav>
 
-        {/* Bottom system status indicator */}
-        <div className="shrink-0 border-t border-hairline p-3 bg-canvas/40">
+        {/* Bottom system status */}
+        <div className="shrink-0 border-t border-[#e5e1d8] p-3">
           <div
             className={cn(
-              "flex items-center gap-2.5 rounded-md border border-hairline bg-surface-card p-2.5 shadow-subtle",
+              "flex items-center gap-2 rounded-lg border border-[#e5e1d8] bg-white p-2.5",
               isCollapsed ? "justify-center" : ""
             )}
           >
-            <div className="relative flex h-2.5 w-2.5 shrink-0">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent-teal opacity-75"></span>
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-accent-teal"></span>
-            </div>
+            <span className="h-2 w-2 rounded-full bg-[#2e7d52] shrink-0" />
             {!isCollapsed && (
               <div className="overflow-hidden">
-                <p className="truncate text-[11px] font-medium text-ink">
-                  Neon Postgres Connected
+                <p className="truncate text-xs font-medium text-[#191816]">
+                  Postgres connected
                 </p>
-                <p className="truncate text-[10px] text-muted font-mono">
-                  Multi-Tenant Tenant Isolation
+                <p className="truncate text-[10px] text-[#7f7b73] font-mono">
+                  Tenant isolated
                 </p>
               </div>
             )}

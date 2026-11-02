@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Sparkles, TrendingUp, AlertTriangle, Zap, Info, RefreshCw } from "lucide-react";
-import { ClaudeMark } from "@/components/ui/claude-mark";
+import { TrendingUp, AlertTriangle, Zap, Info, RefreshCw } from "lucide-react";
 
 interface Insight {
   type: "positive" | "warning" | "neutral" | "action";
@@ -17,40 +16,30 @@ interface AIInsightsPanelProps {
 const TYPE_CONFIG = {
   positive: {
     icon: TrendingUp,
-    accent: "text-[#5db872]",
-    bg: "bg-[#5db872]/10 border-[#5db872]/20",
-    dot: "bg-[#5db872]",
-    label: "GROWTH",
+    badge: "text-[#16a34a] bg-[#16a34a]/10",
+    label: "Growth",
   },
   warning: {
     icon: AlertTriangle,
-    accent: "text-[#e8a55a]",
-    bg: "bg-[#e8a55a]/10 border-[#e8a55a]/20",
-    dot: "bg-[#e8a55a]",
-    label: "WATCH",
+    badge: "text-[#b45309] bg-[#b45309]/10",
+    label: "Watch",
   },
   neutral: {
     icon: Info,
-    accent: "text-[#5db8a6]",
-    bg: "bg-[#5db8a6]/10 border-[#5db8a6]/20",
-    dot: "bg-[#5db8a6]",
-    label: "INSIGHT",
+    badge: "text-[#0284c7] bg-[#0284c7]/10",
+    label: "Note",
   },
   action: {
     icon: Zap,
-    accent: "text-[#cc785c]",
-    bg: "bg-[#cc785c]/10 border-[#cc785c]/20",
-    dot: "bg-[#cc785c]",
-    label: "ACTION",
+    badge: "text-[#c26a50] bg-[#c26a50]/10",
+    label: "Opportunity",
   },
 };
 
 export function AIInsightsPanel({ className = "" }: AIInsightsPanelProps) {
   const [insights, setInsights] = useState<Insight[]>([]);
   const [loading, setLoading] = useState(true);
-  const [aiEnabled, setAiEnabled] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(0);
 
   const load = async () => {
     setRefreshing(true);
@@ -58,8 +47,6 @@ export function AIInsightsPanel({ className = "" }: AIInsightsPanelProps) {
       const res = await fetch("/api/ai/insights");
       const json = await res.json();
       setInsights(json.insights ?? []);
-      setAiEnabled(json.aiEnabled ?? false);
-      setVisibleCount(0);
     } catch {
       // silently fail
     } finally {
@@ -72,116 +59,59 @@ export function AIInsightsPanel({ className = "" }: AIInsightsPanelProps) {
     load();
   }, []);
 
-  // Stagger card appearance
-  useEffect(() => {
-    if (insights.length === 0) return;
-    let i = 0;
-    const timer = setInterval(() => {
-      i++;
-      setVisibleCount(i);
-      if (i >= insights.length) clearInterval(timer);
-    }, 140);
-    return () => clearInterval(timer);
-  }, [insights]);
-
   return (
-    <div className={`bg-[#181715] rounded-xl border border-[#252320] overflow-hidden ${className}`}>
+    <div className={`rounded-xl border border-[#e5e1d8] bg-white overflow-hidden flex flex-col ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-[#252320]">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#cc785c]/15 border border-[#cc785c]/20">
-            <ClaudeMark className="h-4 w-4 text-[#cc785c]" />
-          </div>
-          <div>
-            <p className="text-xs font-medium uppercase tracking-widest text-[#a09d96]">
-              AI Intelligence
-            </p>
-            <h3 className="font-serif text-base font-normal text-[#faf9f5] leading-tight">
-              Weekly Business Digest
-            </h3>
-          </div>
+      <div className="flex items-center justify-between px-5 py-4 border-b border-[#f0ede6]">
+        <div>
+          <p className="text-[11px] font-medium text-[#7b7266]">Automated diagnostic</p>
+          <h3 className="font-serif text-lg font-normal text-[#1f1b16]">
+            Weekly insights digest
+          </h3>
         </div>
-
-        <div className="flex items-center gap-3">
-          {!aiEnabled ? (
-            <span className="text-[10px] font-mono text-[#a09d96] bg-[#252320] px-2.5 py-0.5 rounded border border-[#3d3d3a] flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#5db8a6]" />
-              INTELLIGENCE ACTIVE
-            </span>
-          ) : (
-            <span className="flex items-center gap-1.5 text-[10px] font-mono text-[#5db872]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#5db872] animate-pulse" />
-              AI REASONING LIVE
-            </span>
-          )}
-          <button
-            onClick={load}
-            disabled={refreshing}
-            className="flex items-center justify-center w-7 h-7 rounded-md border border-[#3d3d3a] bg-[#252320] text-[#6c6a64] hover:text-[#faf9f5] hover:border-[#cc785c]/40 transition-all disabled:opacity-40"
-            title="Refresh AI insights"
-          >
-            <RefreshCw className={`h-3 w-3 ${refreshing ? "animate-spin" : ""}`} />
-          </button>
-        </div>
+        <button
+          onClick={load}
+          disabled={refreshing}
+          className="p-1.5 rounded-md text-[#7b7266] hover:text-[#1f1b16] hover:bg-[#faf9f5] transition-colors"
+          title="Refresh insights"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin text-[#c26a50]" : ""}`} />
+        </button>
       </div>
 
-      {/* Insight Cards Grid */}
-      <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {loading
-          ? [1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className="h-28 rounded-lg bg-[#252320] border border-[#3d3d3a] animate-pulse"
-              />
-            ))
-          : insights.map((insight, idx) => {
-              const cfg = TYPE_CONFIG[insight.type] ?? TYPE_CONFIG.neutral;
-              const Icon = cfg.icon;
-              const isVisible = idx < visibleCount;
-
-              return (
-                <div
-                  key={idx}
-                  style={{
-                    opacity: isVisible ? 1 : 0,
-                    transform: isVisible ? "translateY(0)" : "translateY(12px)",
-                    transition: "opacity 0.35s ease, transform 0.35s ease",
-                  }}
-                  className={`rounded-lg border p-4 ${cfg.bg}`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`mt-0.5 flex-shrink-0 ${cfg.accent}`}>
-                      <Icon className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <span
-                          className={`text-[9px] font-mono font-bold uppercase tracking-widest ${cfg.accent}`}
-                        >
-                          {cfg.label}
-                        </span>
-                      </div>
-                      <p className="text-sm font-medium text-[#faf9f5] leading-snug mb-1">
-                        {insight.headline}
-                      </p>
-                      <p className="text-xs text-[#a09d96] leading-relaxed">
-                        {insight.body}
-                      </p>
-                    </div>
-                  </div>
+      {/* Body */}
+      <div className="p-5 flex-1 divide-y divide-[#f0ede6]">
+        {loading ? (
+          <div className="space-y-4 py-2">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="animate-pulse space-y-2 pt-3 first:pt-0">
+                <div className="h-3.5 w-48 bg-[#efe9df] rounded" />
+                <div className="h-3 w-full bg-[#efe9df] rounded" />
+              </div>
+            ))}
+          </div>
+        ) : insights.length === 0 ? (
+          <div className="py-8 text-center space-y-1">
+            <p className="text-xs text-[#5e554a]">No anomalies or observations</p>
+            <p className="text-[11px] text-[#7b7266]">Import additional sales records to generate pattern insights.</p>
+          </div>
+        ) : (
+          insights.map((item, idx) => {
+            const config = TYPE_CONFIG[item.type] || TYPE_CONFIG.neutral;
+            return (
+              <div key={idx} className="py-3.5 first:pt-0 last:pb-0 space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${config.badge}`}>
+                    {config.label}
+                  </span>
+                  <p className="text-xs font-medium text-[#1f1b16]">{item.headline}</p>
                 </div>
-              );
-            })}
-      </div>
-
-      {/* Footer */}
-      <div className="px-5 pb-4 flex items-center gap-2">
-        <Sparkles className="h-3 w-3 text-[#cc785c]" />
-        <p className="text-[10px] text-[#6c6a64] font-mono">
-          Automated executive pattern analysis & revenue modeling · Updates continuously
-        </p>
+                <p className="text-xs text-[#5e554a] leading-relaxed pl-1">{item.body}</p>
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );
 }
-

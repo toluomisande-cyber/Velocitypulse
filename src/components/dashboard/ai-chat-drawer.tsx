@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { X, Send, Sparkles, Loader2, MessageSquare, ChevronRight } from "lucide-react";
+import { X, Send, Loader2, MessageSquare } from "lucide-react";
 import { ClaudeMark } from "@/components/ui/claude-mark";
 
 interface Message {
@@ -18,7 +18,7 @@ interface AIChatDrawerProps {
 const QUICK_PROMPTS = [
   "What drove the most revenue this week?",
   "Which category is underperforming?",
-  "What day of week has highest sales?",
+  "What day has highest velocity?",
   "How is my AOV trending?",
 ];
 
@@ -27,7 +27,7 @@ export function AIChatDrawer({ isOpen, onClose }: AIChatDrawerProps) {
     {
       role: "ai",
       content:
-        "Hello. I'm your AI sales analyst. Ask me anything about your business data — revenue trends, category performance, anomalies, or forecasts.",
+        "Hello. I analyze your live sales transactions. Ask me about weekly revenue, velocity pace, anomalies, or forward projections.",
       timestamp: new Date(),
     },
   ]);
@@ -62,7 +62,7 @@ export function AIChatDrawer({ isOpen, onClose }: AIChatDrawerProps) {
         ...prev,
         {
           role: "ai",
-          content: json.answer ?? "I couldn't generate a response.",
+          content: json.answer ?? "I couldn't generate an answer from the database records.",
           timestamp: new Date(),
         },
       ]);
@@ -71,7 +71,7 @@ export function AIChatDrawer({ isOpen, onClose }: AIChatDrawerProps) {
         ...prev,
         {
           role: "ai",
-          content: "An error occurred. Please try again.",
+          content: "Failed to connect to analytics engine. Please retry.",
           timestamp: new Date(),
         },
       ]);
@@ -84,7 +84,7 @@ export function AIChatDrawer({ isOpen, onClose }: AIChatDrawerProps) {
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-[#141413]/60 backdrop-blur-sm z-40 transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-[#191816]/40 backdrop-blur-sm z-40 transition-opacity duration-200 ${
           isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         onClick={onClose}
@@ -92,40 +92,40 @@ export function AIChatDrawer({ isOpen, onClose }: AIChatDrawerProps) {
 
       {/* Drawer */}
       <div
-        className={`fixed top-0 right-0 h-full w-full max-w-md bg-[#181715] border-l border-[#252320] z-50 flex flex-col transition-transform duration-300 ease-out ${
+        className={`fixed top-0 right-0 h-full w-full max-w-md bg-white border-l border-[#e5e1d8] z-50 flex flex-col transition-transform duration-250 ease-out shadow-xl ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#252320]">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#cc785c]/15 border border-[#cc785c]/20">
-              <ClaudeMark className="h-4 w-4 text-[#cc785c]" />
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#f0ede6]">
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#faf9f5] border border-[#e5e1d8]">
+              <ClaudeMark className="h-4 w-4 text-[#c26a50]" />
             </div>
             <div>
-              <p className="text-[10px] font-mono uppercase tracking-widest text-[#6c6a64]">
-                AI Assistant
+              <p className="text-[11px] font-medium text-[#7b7266]">
+                Analytics copilot
               </p>
-              <h3 className="font-serif text-base font-normal text-[#faf9f5]">
-                Ask Your Data
+              <h3 className="font-serif text-base font-normal text-[#191816]">
+                Query assistant
               </h3>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="flex items-center justify-center w-8 h-8 rounded-md border border-[#3d3d3a] bg-[#252320] text-[#6c6a64] hover:text-[#faf9f5] hover:border-[#cc785c]/40 transition-all"
+            className="flex items-center justify-center w-7 h-7 rounded-md text-[#7b7266] hover:text-[#191816] hover:bg-[#faf9f5] transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Quick prompts */}
-        <div className="flex gap-2 px-5 py-3 overflow-x-auto border-b border-[#252320] no-scrollbar">
+        <div className="flex gap-2 px-5 py-3 overflow-x-auto border-b border-[#f0ede6] bg-[#faf9f5]">
           {QUICK_PROMPTS.map((q) => (
             <button
               key={q}
               onClick={() => send(q)}
-              className="flex-shrink-0 text-[11px] font-mono bg-[#252320] border border-[#3d3d3a] text-[#a09d96] hover:text-[#faf9f5] hover:border-[#cc785c]/40 rounded-full px-3 py-1.5 transition-all whitespace-nowrap"
+              className="flex-shrink-0 text-xs font-normal bg-white border border-[#e5e1d8] text-[#5e554a] hover:text-[#191816] hover:border-[#c26a50] rounded-md px-2.5 py-1 transition-colors whitespace-nowrap"
             >
               {q}
             </button>
@@ -133,85 +133,67 @@ export function AIChatDrawer({ isOpen, onClose }: AIChatDrawerProps) {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3.5">
           {messages.map((msg, idx) => (
             <div
               key={idx}
-              className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}
+              className={`flex gap-2.5 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}
             >
               {msg.role === "ai" && (
-                <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#cc785c]/15 border border-[#cc785c]/20 flex items-center justify-center mt-0.5">
-                  <ClaudeMark className="h-3.5 w-3.5 text-[#cc785c]" />
+                <div className="flex-shrink-0 w-6 h-6 rounded-md bg-[#faf9f5] border border-[#e5e1d8] flex items-center justify-center mt-0.5">
+                  <ClaudeMark className="h-3 w-3 text-[#c26a50]" />
                 </div>
               )}
               <div
-                className={`max-w-[82%] rounded-xl px-4 py-3 ${
+                className={`max-w-[85%] rounded-lg px-3.5 py-2.5 text-xs leading-relaxed ${
                   msg.role === "user"
-                    ? "bg-[#cc785c] text-white"
-                    : "bg-[#252320] border border-[#3d3d3a] text-[#faf9f5]"
+                    ? "bg-[#c26a50] text-white"
+                    : "bg-[#faf9f5] border border-[#e5e1d8] text-[#191816]"
                 }`}
               >
-                <p className="text-sm leading-relaxed">{msg.content}</p>
-                <p
-                  suppressHydrationWarning
-                  className={`text-[10px] mt-1.5 font-mono ${
-                    msg.role === "user" ? "text-white/60" : "text-[#6c6a64]"
-                  }`}
-                >
-                  {msg.timestamp.toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
+                <p>{msg.content}</p>
               </div>
             </div>
           ))}
-
           {loading && (
-            <div className="flex gap-3">
-              <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#cc785c]/15 border border-[#cc785c]/20 flex items-center justify-center">
-                <ClaudeMark className="h-3.5 w-3.5 text-[#cc785c]" />
+            <div className="flex gap-2.5">
+              <div className="flex-shrink-0 w-6 h-6 rounded-md bg-[#faf9f5] border border-[#e5e1d8] flex items-center justify-center mt-0.5">
+                <ClaudeMark className="h-3 w-3 text-[#c26a50]" />
               </div>
-              <div className="bg-[#252320] border border-[#3d3d3a] rounded-xl px-4 py-3 flex items-center gap-2">
-                <Loader2 className="h-3.5 w-3.5 text-[#cc785c] animate-spin" />
-                <span className="text-xs text-[#6c6a64] font-mono">Analyzing data…</span>
+              <div className="rounded-lg bg-[#faf9f5] border border-[#e5e1d8] px-3.5 py-2.5 text-xs text-[#7b7266] flex items-center gap-2">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-[#c26a50]" />
+                Querying database metrics…
               </div>
             </div>
           )}
           <div ref={bottomRef} />
         </div>
 
-        {/* Input */}
-        <div className="px-5 py-4 border-t border-[#252320]">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              send(input);
-            }}
-            className="flex gap-2"
+        {/* Input Form */}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            send(input);
+          }}
+          className="p-4 border-t border-[#f0ede6] bg-[#faf9f5] flex gap-2"
+        >
+          <input
+            type="text"
+            placeholder="Ask about revenue, categories, or trends…"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            disabled={loading}
+            className="flex-1 h-9 rounded-md border border-[#e5e1d8] bg-white px-3 text-xs text-[#191816] placeholder:text-[#7b7266] focus:outline-none focus:border-[#c26a50]"
+          />
+          <button
+            type="submit"
+            disabled={!input.trim() || loading}
+            className="h-9 px-3 rounded-md bg-[#c26a50] hover:bg-[#a85840] text-white text-xs font-medium disabled:opacity-40 transition-colors flex items-center justify-center"
           >
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask anything about your sales…"
-              className="flex-1 bg-[#252320] border border-[#3d3d3a] rounded-lg px-4 py-2.5 text-sm text-[#faf9f5] placeholder:text-[#6c6a64] focus:outline-none focus:border-[#cc785c]/60 focus:ring-1 focus:ring-[#cc785c]/30 transition-all"
-              disabled={loading}
-            />
-            <button
-              type="submit"
-              disabled={!input.trim() || loading}
-              className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#cc785c] text-white hover:bg-[#a9583e] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
-            >
-              <Send className="h-4 w-4" />
-            </button>
-          </form>
-          <p className="text-[10px] text-[#6c6a64] font-mono mt-2 text-center">
-            Grounded in live transactional ledgers · Executive AI Copilot
-          </p>
-        </div>
+            <Send className="h-3.5 w-3.5" />
+          </button>
+        </form>
       </div>
     </>
   );
 }
-
