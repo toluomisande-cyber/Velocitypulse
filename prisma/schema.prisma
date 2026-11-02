@@ -18,26 +18,44 @@ model User {
   updatedAt      DateTime       @updatedAt
   sales          Sale[]
   weeklyMetrics  WeeklyMetric[]
+  csvImports     CsvImport[]
 
   @@map("users")
 }
 
+model CsvImport {
+  id         String   @id @default(cuid())
+  userId     String
+  filename   String
+  rowCount   Int
+  importedAt DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sales      Sale[]
+
+  @@index([userId, importedAt])
+  @@map("csv_imports")
+}
+
 model Sale {
-  id           String    @id @default(cuid())
+  id           String     @id @default(cuid())
   userId       String
+  importId     String?
   amount       Float
-  currency     String    @default("USD")
-  category     String    // e.g., Enterprise, SaaS Pro, Consulting, Add-ons
+  currency     String     @default("USD")
+  category     String     // e.g., Enterprise, SaaS Pro, Consulting, Add-ons
   customerName String?
   orderRef     String?
   notes        String?
   soldAt       DateTime
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  csvImport    CsvImport? @relation(fields: [importId], references: [id], onDelete: SetNull)
 
   @@index([userId, soldAt])
+  @@index([importId])
   @@index([category])
   @@map("sales")
 }

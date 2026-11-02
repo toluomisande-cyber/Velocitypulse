@@ -1,0 +1,27 @@
+{
+  "planHash": "0d980425b1bf99d18f3397dfb93215d9e33d5cba8989bc80a5d3decbfd33ad96",
+  "phase": "baseline",
+  "recordedAtUtc": "2026-11-02T15:22:02.7964654Z",
+  "retryCount": 0,
+  "resetBaseline": false,
+  "complete": true,
+  "result": {
+    "setupSucceeded": false,
+    "setupDurationMs": 1879,
+    "setupFailureOutput": "setup step 0 \u0027npm\u0027 failed (exit=1, timedOut=False)\r\nnpm warn EBADENGINE Unsupported engine {\r\nnpm warn EBADENGINE   package: \u0027yargs@18.2.0\u0027,\r\nnpm warn EBADENGINE   required: { node: \u0027^20.19.0 || ^22.12.0 || \u003E=23\u0027 },\r\nnpm warn EBADENGINE   current: { node: \u0027v22.11.0\u0027, npm: \u002710.9.0\u0027 }\r\nnpm warn EBADENGINE }\r\nnpm warn EBADENGINE Unsupported engine {\r\nnpm warn EBADENGINE   package: \u0027yargs-parser@22.0.0\u0027,\r\nnpm warn EBADENGINE   required: { node: \u0027^20.19.0 || ^22.12.0 || \u003E=23\u0027 },\r\nnpm warn EBADENGINE   current: { node: \u0027v22.11.0\u0027, npm: \u002710.9.0\u0027 }\r\nnpm warn EBADENGINE }\r\nnpm error code EUSAGE\r\nnpm error\r\nnpm error \u0060npm ci\u0060 can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync. Please update your lock file with \u0060npm install\u0060 before continuing.\r\nnpm error\r\nnpm error Invalid: lock file\u0027s picomatch@2.3.2 does not satisfy picomatch@4.0.7\r\nnpm error Missing: picomatch@2.3.2 from lock file\r\nnpm error Missing: picomatch@2.3.2 from lock file\r\nnpm error Missing: picomatch@2.3.2 from lock file\r\nnpm error\r\nnpm error Clean install a project\r\nnpm error\r\nnpm error Usage:\r\nnpm error npm ci\r\nnpm error\r\nnpm error Options:\r\nnpm error [--install-strategy \u003Choisted|nested|shallow|linked\u003E] [--legacy-bundling]\r\nnpm error [--global-style] [--omit \u003Cdev|optional|peer\u003E [--omit \u003Cdev|optional|peer\u003E ...]]\r\nnpm error [--include \u003Cprod|dev|optional|peer\u003E [--include \u003Cprod|dev|optional|peer\u003E ...]]\r\nnpm error [--strict-peer-deps] [--foreground-scripts] [--ignore-scripts] [--no-audit]\r\nnpm error [--no-bin-links] [--no-fund] [--dry-run]\r\nnpm error [-w|--workspace \u003Cworkspace-name\u003E [-w|--workspace \u003Cworkspace-name\u003E ...]]\r\nnpm error [-ws|--workspaces] [--include-workspace-root] [--install-links]\r\nnpm error\r\nnpm error aliases: clean-install, ic, install-clean, isntall-clean\r\nnpm error\r\nnpm error Run \u0022npm help ci\u0022 for more info\r\nnpm error A complete log of this run can be found in: C:\\Users\\User\\AppData\\Local\\npm-cache\\_logs\\2026-11-02T15_22_01_358Z-debug-0.log\r\n",
+    "assertions": [],
+    "executions": [
+      {
+        "source": "setup[0]",
+        "resolvedExecutable": "C:\\Users\\User\\nodejs\\npm.CMD",
+        "args": [
+          "ci"
+        ],
+        "cwd": "C:\\Users\\User\\Documents\\max 2\\velocitypulse",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      }
+    ]
+  }
+}

@@ -14,6 +14,7 @@ import { AIInsightsPanel } from "@/components/dashboard/ai-insights-panel";
 import { AIForecastPanel } from "@/components/dashboard/ai-forecast-panel";
 import { AIChatDrawer } from "@/components/dashboard/ai-chat-drawer";
 import { HeroBand } from "@/components/dashboard/hero-band";
+import { ImportsManager } from "@/components/dashboard/imports-manager";
 import { KPISummary, DailyVelocityPoint, WeeklyBarPoint, VelocityGaugeData } from "@/lib/analytics";
 import { motion } from "framer-motion";
 import { UploadCloud, PlusCircle } from "lucide-react";
@@ -271,38 +272,51 @@ export default function DashboardPage({ defaultTab = "overview" }: { defaultTab?
             </div>
           </section>
 
-          {/* ── BAND 6: CSV Ingestion anchor */}
-          <section id="section-ingestion" className="bg-[#181715] border-t border-[#252320] px-5 py-12 md:px-8 lg:px-10 text-center">
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-80px" }}
-              variants={staggerContainer}
-            >
-              <motion.p className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#6c6a64] mb-3" variants={fadeInUp}>
-                Sales Intelligence Platform
-              </motion.p>
-              <motion.h3 className="font-serif text-2xl md:text-4xl font-normal text-[#faf9f5] tracking-tight mb-4" variants={fadeInUp}>
-                Every transaction tells a story.
-              </motion.h3>
-              <motion.p className="text-sm text-[#6c6a64] font-mono max-w-md mx-auto mb-6" variants={fadeInUp}>
-                Powered by Neon PostgreSQL · Next.js 15 App Router · Prisma ORM · Real-Time AI Engine
-              </motion.p>
-              <motion.div className="flex items-center justify-center gap-3" variants={fadeInUp}>
-                <button
-                  onClick={() => setIsNewSaleOpen(true)}
-                  className="inline-flex items-center gap-2 bg-[#cc785c] hover:bg-[#a9583e] text-white font-medium px-6 py-3 rounded-lg transition-colors"
-                >
-                  Record a Sale
-                </button>
-                <button
-                  onClick={() => setIsCsvUploadOpen(true)}
-                  className="inline-flex items-center gap-2 border border-[#3d3d3a] text-[#a09d96] hover:text-[#faf9f5] hover:border-[#6c6a64] font-medium px-6 py-3 rounded-lg transition-colors"
-                >
-                  Import CSV
-                </button>
+          {/* ── BAND 6: CSV Ingestion + Imports Manager */}
+          <section id="section-ingestion" className="border-t border-[#e6dfd8] px-5 py-12 md:px-8 lg:px-10">
+            <div className="max-w-7xl mx-auto">
+              <motion.div
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-80px" }}
+                variants={staggerContainer}
+              >
+                <motion.div className="mb-6 flex items-center justify-between flex-wrap gap-4" variants={fadeInUp}>
+                  <div>
+                    <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#8e8b82] mb-1">
+                      Data Ingestion
+                    </p>
+                    <h2 className="font-serif text-2xl md:text-3xl font-normal text-[#141413] tracking-tight relative inline-block">
+                      CSV Import History
+                      <span className="absolute -bottom-1 left-0 right-0 h-px bg-gradient-to-r from-[#cc785c] to-transparent" />
+                    </h2>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setIsNewSaleOpen(true)}
+                      className="inline-flex items-center gap-2 border border-hairline text-ink hover:bg-surface-card text-xs font-medium px-4 py-2 rounded-lg transition-colors"
+                    >
+                      <PlusCircle className="h-3.5 w-3.5 text-primary" />
+                      Record Sale
+                    </button>
+                    <button
+                      onClick={() => setIsCsvUploadOpen(true)}
+                      className="inline-flex items-center gap-2 bg-[#cc785c] hover:bg-[#a9583e] text-white text-xs font-medium px-4 py-2 rounded-lg transition-colors"
+                    >
+                      <UploadCloud className="h-3.5 w-3.5" />
+                      Import CSV
+                    </button>
+                  </div>
+                </motion.div>
+                <motion.div variants={fadeInUp}>
+                  <ImportsManager
+                    onImportDeleted={handleDataUpdated}
+                    onOpenUpload={() => setIsCsvUploadOpen(true)}
+                    refreshTrigger={refreshTrigger}
+                  />
+                </motion.div>
               </motion.div>
-            </motion.div>
+            </div>
           </section>
 
         </main>

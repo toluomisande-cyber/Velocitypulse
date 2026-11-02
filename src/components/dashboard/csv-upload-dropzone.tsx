@@ -120,7 +120,7 @@ export function CsvUploadDropzone({ isOpen, onClose, onSuccess }: CsvUploadDropz
       const res = await fetch("/api/sales/bulk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rows: previewRows }),
+        body: JSON.stringify({ rows: previewRows, filename: file?.name || "upload.csv" }),
       });
 
       const json = await res.json();

@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { rows } = body;
+    const { rows, filename } = body;
 
     if (!Array.isArray(rows) || rows.length === 0) {
       return NextResponse.json(
@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
 
     const validatedSales: Array<{
       userId: string;
+      importId: string;
       amount: number;
       currency: string;
       category: string;
@@ -36,6 +37,15 @@ export async function POST(req: NextRequest) {
       soldAt: Date;
     }> = [];
     const errors: string[] = [];
+
+    // Create import batch record first
+    const csvImport = await prisma.csvImport.create({
+      data: {
+        userId,
+        filename: filename || "upload.csv",
+        rowCount: 0, // will be updated after validation
+      },
+    });
 
     rows.forEach((row, index) => {
       const rowNum = index + 1;
@@ -68,6 +78,7 @@ export async function POST(req: NextRequest) {
 
       validatedSales.push({
         userId,
+        importId: csvImport.id,
         amount: parseFloat(amount.toFixed(2)),
         currency: "USD",
         category: category || "Enterprise Plan",
@@ -79,6 +90,8 @@ export async function POST(req: NextRequest) {
     });
 
     if (validatedSales.length === 0) {
+      // Clean up the empty import record
+      await prisma.csvImport.delete({ where: { id: csvImport.id } });
       return NextResponse.json(
         {
           success: false,
@@ -89,15 +102,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Insert batch directly into PostgreSQL scoped to this tenant
-    const res = await prisma.sale.createMany({
-      data: validatedSales,
-    });
+    // Insert validated rows and update import count in a transaction
+    const [res] = await prisma.$transaction([
+      prisma.sale.createMany({ data: validatedSales }),
+      prisma.csvImport.update({
+        where: { id: csvImport.id },
+        data: { rowCount: validatedSales.length },
+      }),
+    ]);
 
     return NextResponse.json({
       success: true,
       message: `Successfully imported ${res.count} sales records into your database.`,
       importedCount: res.count,
+      importId: csvImport.id,
       errorsCount: errors.length,
       errors: errors.slice(0, 5),
     });
