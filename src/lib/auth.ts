@@ -3,6 +3,9 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 
+const NEXTAUTH_SECRET =
+  process.env.NEXTAUTH_SECRET || "sales-velocity-dashboard-secret-jwt-key-2026-production";
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -25,7 +28,7 @@ export const authOptions: NextAuthOptions = {
           });
 
           if (!user || !user.passwordHash) {
-            throw new Error("No account found with this email address. Please create an account.");
+            throw new Error("No account found with this email. Please register an account first.");
           }
 
           const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
@@ -40,7 +43,12 @@ export const authOptions: NextAuthOptions = {
           };
         } catch (err: unknown) {
           const msg = (err as Error)?.message;
-          if (msg && (msg.includes("No account") || msg.includes("Invalid password") || msg.includes("Please enter"))) {
+          if (
+            msg &&
+            (msg.includes("No account found") ||
+              msg.includes("Invalid password") ||
+              msg.includes("Please enter"))
+          ) {
             throw err;
           }
           console.error("[Auth] Database verification error:", err);
@@ -72,6 +80,7 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: "/login",
+    error: "/login",
   },
-  secret: process.env.NEXTAUTH_SECRET || "velocitypulse-production-secret-key-32chars",
+  secret: NEXTAUTH_SECRET,
 };
